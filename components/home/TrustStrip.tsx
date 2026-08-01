@@ -1,29 +1,25 @@
-import { BadgeCheck, RefreshCw, Sparkles, Truck, Wallet } from "lucide-react";
 import Container from "@/components/ui/Container";
+import { trustIcons } from "@/components/ui/TrustIcons";
 import { trustStrip } from "@/data/site";
-
-const icons = {
-  sparkles: Sparkles,
-  truck: Truck,
-  wallet: Wallet,
-  refresh: RefreshCw,
-  badge: BadgeCheck,
-};
 
 export default function TrustStrip() {
   return (
-    <section className="border-y border-line bg-white">
+    <section className="border-b border-line bg-cream">
       <Container>
-        <ul className="flex gap-6 overflow-x-auto py-4 no-scrollbar sm:justify-between sm:gap-4">
+        <ul className="flex justify-between gap-4 overflow-x-auto py-8 no-scrollbar sm:justify-center sm:gap-8 lg:gap-12">
           {trustStrip.map((item) => {
-            const Icon = icons[item.icon];
+            const Icon = trustIcons[item.icon];
+            // Fixed width on phones so labels wrap to two lines; from md they hug their
+            // text and each sits on a single line.
             return (
               <li
                 key={item.label}
-                className="flex shrink-0 items-center gap-2 text-[11px] font-medium tracking-[0.1em] uppercase text-ink-soft"
+                className="flex w-26 shrink-0 flex-col items-center gap-3.5 text-center sm:w-32 md:w-auto md:whitespace-nowrap"
               >
-                <Icon className="h-4 w-4 text-gold" />
-                {item.label}
+                <Icon className="h-11 w-11 text-gold sm:h-12 sm:w-12" />
+                <span className="text-[14px] leading-tight font-semibold text-ink sm:text-[15px]">
+                  {item.label}
+                </span>
               </li>
             );
           })}

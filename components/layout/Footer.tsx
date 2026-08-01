@@ -11,7 +11,10 @@ export default function Footer() {
       <Container className="grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
         {/* brand */}
         <div>
-          <p className="font-display text-2xl tracking-[0.3em] text-cream">RAKKHI</p>
+          <p className="font-display text-2xl tracking-widest text-cream">
+            {site.wordmark.head}
+            <span className="text-gold">{site.wordmark.tail}</span>
+          </p>
           <p className="mt-4 text-[13px] leading-relaxed text-cream/60">{site.about}</p>
           <div className="mt-5 space-y-1.5 text-[13px]">
             <a href={site.phoneHref} className="flex items-center gap-2 hover:text-gold">
@@ -32,7 +35,7 @@ export default function Footer() {
         {/* subscribe */}
         <div>
           <h4 className="text-xs font-semibold tracking-[0.16em] uppercase text-cream">
-            Subscribe to Rakkhi
+            Subscribe to Elyrafashion
           </h4>
           <p className="mt-4 text-[13px] leading-relaxed text-cream/60">
             Subscribe for early access to new drops, special offers and once-in-a-season deals.
@@ -73,7 +76,8 @@ export default function Footer() {
 
       {/* trust badges */}
       <div className="border-t border-cream/10">
-        <Container className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 py-4 text-[11px] tracking-[0.1em] uppercase text-cream/55">
+        <Container className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 py-4 text-[11px] 
+         uppercase text-cream/55">
           {footerBadges.map((b) => (
             <span key={b}>{b}</span>
           ))}

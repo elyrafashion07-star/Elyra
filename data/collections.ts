@@ -2,28 +2,29 @@ import type { Collection } from "@/lib/types";
 
 export const collections: Collection[] = [
   // ── feature ────────────────────────────────────────────────
-  { handle: "all", title: "All Jewellery", description: "Every piece in the Rakkhi world — 925 sterling silver, hallmarked and hand-finished.", group: "feature" },
+  { handle: "all", title: "All Jewellery", description: "Every piece in the Elyrafashion world — 925 sterling silver, hallmarked and hand-finished.", group: "feature" },
   { handle: "new-arrivals", title: "New Arrivals", description: "The freshest additions to the studio, restocked every fortnight.", group: "feature" },
   { handle: "bestseller", title: "Bestseller", description: "The pieces our customers keep coming back for.", group: "feature" },
   { handle: "rakhi-2026", title: "Rakhi Collection 2026", description: "925 sterling silver rakhis and rakhi bracelets, made to be worn long after the thread season.", group: "feature" },
 
   // ── category ───────────────────────────────────────────────
-  { handle: "rings", title: "Rings", description: "Stackable bands, solitaires and statement silhouettes.", group: "category" },
-  { handle: "bracelets", title: "Bracelets", description: "Delicate chains and sculpted cuffs for every wrist.", group: "category" },
-  { handle: "anklets", title: "Anklets", description: "Featherlight payals with charms, beads and evil-eye detail.", group: "category" },
-  { handle: "neck-chains", title: "Neckchains", description: "Everyday silver chains in classic and modern links.", group: "category" },
-  { handle: "earrings", title: "Earrings", description: "Studs, hoops and drops that carry from desk to dinner.", group: "category" },
-  { handle: "pendants", title: "Pendant Sets", description: "Pendants with matching chains, ready to gift.", group: "category" },
-  { handle: "brooches", title: "Brooches", description: "Sherwani and blazer brooches with old-world craft.", group: "category" },
+  { handle: "rings", title: "Rings", description: "Stackable bands, solitaires and statement silhouettes.", group: "category", image: "/images/categories/rings.jpg" },
+  { handle: "bracelets", title: "Bracelets", description: "Delicate chains and sculpted cuffs for every wrist.", group: "category", image: "/images/categories/bracelets.jpg" },
+  { handle: "anklets", title: "Anklets", description: "Featherlight payals with charms, beads and evil-eye detail.", group: "category", image: "/images/categories/anklets.jpg" },
+  { handle: "neck-chains", title: "Neckchains", description: "Everyday silver chains in classic and modern links.", group: "category", image: "/images/categories/neckchains.png" },
+  { handle: "earrings", title: "Earrings", description: "Studs, hoops and drops that carry from desk to dinner.", group: "category", image: "/images/categories/earrings.jpg" },
+  { handle: "pendants", title: "Pendant Sets", description: "Pendants with matching chains, ready to gift.", group: "category", image: "/images/categories/pendant_set.jpg" },
+  { handle: "brooches", title: "Brooches", description: "Sherwani and blazer brooches with old-world craft.", group: "category", image: "/images/categories/brooches.jpg" },
+  // No tile art yet — kept out of the homepage slider (see homeCategories below).
   { handle: "kurta-buttons", title: "Men Kurta Buttons", description: "Sterling silver button sets for kurtas and bandhgalas.", group: "category" },
-  { handle: "bracelets-men", title: "Men Bracelets", description: "Heavier links and rudraksh-inspired silver for men.", group: "category" },
+  { handle: "bracelets-men", title: "Men Bracelets", description: "Heavier links and rudraksh-inspired silver for men.", group: "category", image: "/images/categories/men_bracelets.jpg" },
   { handle: "men-rings", title: "Men Rings", description: "Bold bands with matte, oxidised and polished finishes.", group: "category" },
 
   // ── occasion ───────────────────────────────────────────────
-  { handle: "birthday", title: "Birthday Gifts", description: "Thoughtful silver for the person who has everything.", group: "occasion" },
-  { handle: "anniversary", title: "Anniversary", description: "Pieces that mark the years, quietly and beautifully.", group: "occasion" },
-  { handle: "wedding", title: "Wedding", description: "Bridal-party silver, trousseau sets and shagun gifting.", group: "occasion" },
-  { handle: "daily-wear", title: "Daily Wear", description: "Light, tarnish-resistant silver you never take off.", group: "occasion" },
+  { handle: "birthday", title: "Birthday Gifts", description: "Thoughtful silver for the person who has everything.", group: "occasion", image: "/images/occasion/birthday-gifts.png" },
+  { handle: "anniversary", title: "Anniversary", description: "Pieces that mark the years, quietly and beautifully.", group: "occasion", image: "/images/occasion/anniversary.png" },
+  { handle: "wedding", title: "Wedding", description: "Bridal-party silver, trousseau sets and shagun gifting.", group: "occasion", image: "/images/occasion/wedding.png" },
+  { handle: "daily-wear", title: "Daily Wear", description: "Light, tarnish-resistant silver you never take off.", group: "occasion", image: "/images/occasion/daily-wear.png" },
 
   // ── collection ─────────────────────────────────────────────
   { handle: "luxe-gold-plated", title: "Luxe Collection — Gold Plated", description: "18k gold plating over 925 sterling silver.", group: "collection" },
@@ -49,12 +50,13 @@ export const collections: Collection[] = [
 
   // ── gifting ────────────────────────────────────────────────
   { handle: "gifts", title: "The Gifting Edit", description: "Curated silver, boxed and ready to give.", group: "gifting" },
-  { handle: "gift-for-wife", title: "Gift for Wife", description: "For her — pendants, solitaires and everyday luxe.", group: "gifting" },
-  { handle: "gift-for-husband", title: "Gift for Husband", description: "For him — bold bracelets and signet rings.", group: "gifting" },
-  { handle: "gift-for-sister", title: "Gift for Sister", description: "Rakhi-season favourites and forever pieces.", group: "gifting" },
-  { handle: "gift-for-brother", title: "Gift for Brother", description: "Rakhi bracelets and men's silver he'll actually wear.", group: "gifting" },
-  { handle: "gift-for-mother", title: "Gift for Mother", description: "Timeless silver with a little sentiment.", group: "gifting" },
-  { handle: "gift-for-father", title: "Gift for Father", description: "Understated, well-made, built to last.", group: "gifting" },
+  // Filenames come straight from the uploads — note "wifi.png" is the wife tile.
+  { handle: "gift-for-wife", title: "Gift for Wife", description: "For her — pendants, solitaires and everyday luxe.", group: "gifting", image: "/images/gifting/wifi.png" },
+  { handle: "gift-for-husband", title: "Gift for Husband", description: "For him — bold bracelets and signet rings.", group: "gifting", image: "/images/gifting/husband.png" },
+  { handle: "gift-for-sister", title: "Gift for Sister", description: "Rakhi-season favourites and forever pieces.", group: "gifting", image: "/images/gifting/sister.png" },
+  { handle: "gift-for-brother", title: "Gift for Brother", description: "Rakhi bracelets and men's silver he'll actually wear.", group: "gifting", image: "/images/gifting/brother.webp" },
+  { handle: "gift-for-mother", title: "Gift for Mother", description: "Timeless silver with a little sentiment.", group: "gifting", image: "/images/gifting/mother.jpg" },
+  { handle: "gift-for-father", title: "Gift for Father", description: "Understated, well-made, built to last.", group: "gifting", image: "/images/gifting/father.jpg" },
   { handle: "gift-for-her", title: "Gift for Her", description: "Every women's gift in one place.", group: "gifting" },
   { handle: "gift-for-him", title: "Gift for Him", description: "Every men's gift in one place.", group: "gifting" },
 ];
@@ -69,7 +71,11 @@ export function collectionsByGroup(group: Collection["group"]) {
   return collections.filter((c) => c.group === group);
 }
 
-/** Homepage: Shop by Category — order matches the reference layout. */
+/**
+ * Homepage: Shop by Category — order matches the reference layout.
+ * kurta-buttons and men-rings are deliberately left out of the slider; both
+ * collections still exist and are reachable from the For Him menu.
+ */
 export const homeCategories = [
   "rings",
   "bracelets",
@@ -78,9 +84,7 @@ export const homeCategories = [
   "earrings",
   "pendants",
   "brooches",
-  "kurta-buttons",
   "bracelets-men",
-  "men-rings",
 ];
 
 export const homeOccasions = ["birthday", "anniversary", "wedding", "daily-wear"];

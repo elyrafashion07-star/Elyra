@@ -7,8 +7,9 @@
  *
  *   name                 upload size        ratio
  *   ─────────────────────────────────────────────────
- *   logo                 480 × 160          3:1
- *   heroDesktop         1920 × 800          12:5
+ *   logo                 480 × 160          3:1  (full lockup)
+ *   logoMark             640 × 387          ~5:3 (EF monogram, transparent PNG)
+ *   heroDesktop         1672 × 836          2:1  (banner art is 16:9 — 105px trims off)
  *   heroMobile           800 × 1000         4:5
  *   productCard         1000 × 1000         1:1
  *   productMain         1200 × 1500         4:5
@@ -18,7 +19,8 @@
  *   collectionTile       800 × 800          1:1
  *   budgetTile           800 × 800          1:1
  *   giftingTile          800 × 800          1:1
- *   genderBanner        1000 × 1200         5:6
+ *   genderBanner        1500 × 1000         3:2  (transparent PNG, art has its own CTA)
+ *   genderBackdrop      2000 ×  661         ~3:1 (silk wave behind both panels)
  *   collectionBanner    1920 × 500          ~4:1
  *   authenticityBanner  1200 × 1500         4:5
  *   cartThumb            150 × 150          1:1
@@ -36,8 +38,9 @@ export type ImageSpec = {
 
 export const IMAGE_SIZES = {
   logo: { width: 480, height: 160, sizes: "150px" },
+  logoMark: { width: 640, height: 387, sizes: "110px" },
 
-  heroDesktop: { width: 1920, height: 800, sizes: "100vw" },
+  heroDesktop: { width: 1672, height: 836, sizes: "100vw" },
   heroMobile: { width: 800, height: 1000, sizes: "100vw" },
 
   productCard: { width: 1000, height: 1000, sizes: "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" },
@@ -50,7 +53,8 @@ export const IMAGE_SIZES = {
   budgetTile: { width: 800, height: 800, sizes: "(max-width: 640px) 45vw, 16vw" },
   giftingTile: { width: 800, height: 800, sizes: "(max-width: 640px) 45vw, 16vw" },
 
-  genderBanner: { width: 1000, height: 1200, sizes: "(max-width: 768px) 100vw, 50vw" },
+  genderBanner: { width: 1500, height: 1000, sizes: "(max-width: 768px) 100vw, 50vw" },
+  genderBackdrop: { width: 2000, height: 661, sizes: "100vw" },
   collectionBanner: { width: 1920, height: 500, sizes: "100vw" },
   authenticityBanner: { width: 1200, height: 1500, sizes: "(max-width: 1024px) 100vw, 500px" },
 

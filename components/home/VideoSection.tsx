@@ -8,7 +8,7 @@ export default function VideoSection() {
       <Container>
         <div className="relative overflow-hidden rounded-xl border border-line">
           {/* Poster 1280 × 720 — swap for a <video poster> using the same box. */}
-          <FixedImage slot="videoPoster" alt="Rakkhi brand film" label="Brand video poster" />
+          <FixedImage slot="videoPoster" alt="Elyrafashion brand film" label="Brand video poster" />
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-ink/25 text-center text-cream">
             <button
               type="button"

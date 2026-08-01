@@ -1,14 +1,30 @@
 import Link from "next/link";
+import FixedImage from "@/components/ui/FixedImage";
+import { site } from "@/data/site";
 
+/**
+ * Stacked lockup: EF monogram over the letterspaced brand name.
+ * The mark is a transparent PNG cropped out of the source lockup by
+ * scripts/make-logo-mark.py, so it sits on any background.
+ */
 export default function Logo({ className = "" }: { className?: string }) {
   return (
-    <Link href="/" aria-label="Rakkhi — home" className={`block leading-none ${className}`}>
-      {/* Wordmark placeholder. Swap for <FixedImage slot="logo" src="/images/logo.png" /> (480 × 160). */}
-      <span className="block font-display text-[26px] tracking-[0.34em] text-ink sm:text-[30px]">
-        RAKKHI
-      </span>
-      <span className="mt-0.5 block text-[8px] tracking-[0.4em] text-muted uppercase">
-        925 Sterling Silver
+    <Link
+      href="/"
+      aria-label={`${site.name} — home`}
+      className={`flex shrink-0 flex-col items-center gap-1 leading-none ${className}`}
+    >
+      <FixedImage
+        slot="logoMark"
+        src="/images/logo/logo-mark.png"
+        alt={`${site.name} monogram`}
+        priority
+        className="w-19.5 sm:w-23 2xl:w-28"
+        imgClassName="object-contain"
+      />
+      <span className="text-[9px] tracking-[0.26em] text-ink-soft uppercase sm:text-[10px]">
+        {site.wordmark.head}
+        {site.wordmark.tail}
       </span>
     </Link>
   );

@@ -6,7 +6,7 @@ import SearchResults from "@/components/collection/SearchResults";
 
 export const metadata: Metadata = {
   title: "Search",
-  description: "Search the Rakkhi catalogue.",
+  description: "Search the Elyrafashion catalogue.",
 };
 
 export default function SearchPage() {

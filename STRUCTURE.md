@@ -1,4 +1,4 @@
-# Rakkhi — Next.js Store Structure
+# Elyrafashion — Next.js Store Structure
 
 Reference site: thesilverora.com (Shopify). Yaha wahi structure Next.js 15 (App Router) me map kiya gaya hai.
 
@@ -21,7 +21,7 @@ Reference site: thesilverora.com (Shopify). Yaha wahi structure Next.js 15 (App 
 ## 2. Folder Structure
 
 ```
-rakkhi/
+elyrafashion/
 ├── app/
 │   ├── layout.tsx                  # AnnouncementBar + Header + Footer + MobileToolbar
 │   ├── page.tsx                    # HOMEPAGE (section order §4)
@@ -226,7 +226,7 @@ images: {
 | Quick Links | About Us, Privacy Policy, Shipping Policy, Terms of Service, Contact, Return Policy, Certificate of Authenticity, Track My Order, Refund & Exchange, Jewellery Care, WhatsApp Channel |
 | Subscribe | Heading + subtext + email input + button + Instagram/WhatsApp icons |
 
-Bottom bar: `© 2026 Rakkhi. All Rights Reserved.` + 5 badges — 100% Authentic Silver · COD Available · Secure Payments · Easy Returns · Pan India Delivery
+Bottom bar: `© 2026 Elyrafashion. All Rights Reserved.` + 5 badges — 100% Authentic Silver · COD Available · Secure Payments · Easy Returns · Pan India Delivery
 
 ---
 

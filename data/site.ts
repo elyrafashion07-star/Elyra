@@ -1,14 +1,16 @@
 export const site = {
-  name: "Rakkhi",
+  name: "Elyrafashion",
+  /** Display lockup — "ELYRA" in ink, "Fashion" in rose-gold, as in the logo artwork. */
+  wordmark: { head: "ELYRA", tail: "Fashion" },
   tagline: "925 Sterling Silver Jewellery",
   phone: "+91 81693 02654",
   phoneHref: "tel:+918169302654",
   whatsapp: "918169302654",
-  email: "support@rakkhi.in",
+  email: "support@elyrafashion.in",
   about:
-    "At Rakkhi, we believe jewellery is more than adornment — it is an extension of who you are. Every piece is thoughtfully handcrafted in 925 sterling silver to celebrate individuality, elevate everyday style, and honour the moments that make life meaningful.",
+    "At Elyrafashion, we believe jewellery is more than adornment — it is an extension of who you are. Every piece is thoughtfully handcrafted in 925 sterling silver to celebrate individuality, elevate everyday style, and honour the moments that make life meaningful.",
   instagram: "https://instagram.com/",
-  copyright: `© ${new Date().getFullYear()} RAKKHI. All Rights Reserved.`,
+  copyright: `© ${new Date().getFullYear()} ELYRAFashion. All Rights Reserved.`,
 };
 
 export const announcements = [
@@ -18,11 +20,11 @@ export const announcements = [
 ];
 
 export const trustStrip = [
-  { label: "925 Sterling Silver", icon: "sparkles" },
-  { label: "Free Shipping", icon: "truck" },
-  { label: "COD Available", icon: "wallet" },
-  { label: "Easy 7-Day Returns", icon: "refresh" },
-  { label: "BIS Certified", icon: "badge" },
+  { label: "925 Sterling Silver", icon: "silver" },
+  { label: "Free Shipping", icon: "shipping" },
+  { label: "COD Available", icon: "cod" },
+  { label: "Easy 7-Day Returns", icon: "returns" },
+  { label: "Certified", icon: "certified" },
 ] as const;
 
 export const whyUs = [

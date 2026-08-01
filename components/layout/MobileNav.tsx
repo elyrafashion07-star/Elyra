@@ -77,8 +77,8 @@ export default function MobileNav({ open, onClose }: { open: boolean; onClose: (
         </nav>
 
         <div className="border-t border-line px-5 py-4 text-sm">
-          <Link href="/account/login" onClick={onClose} className="flex items-center gap-2 py-2">
-            <User className="h-4 w-4" /> Login / Register
+          <Link href="/account" onClick={onClose} className="flex items-center gap-2 py-2">
+            <User className="h-4 w-4" /> My Account
           </Link>
           <Link href="/wishlist" onClick={onClose} className="flex items-center gap-2 py-2">
             <Heart className="h-4 w-4" /> Wishlist

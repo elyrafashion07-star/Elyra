@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Container from "@/components/ui/Container";
 import AuthForm from "@/components/account/AuthForm";
+import { signUp } from "@/app/account/actions";
 
 export const metadata: Metadata = { title: "Register" };
 
@@ -10,11 +11,12 @@ export default function RegisterPage() {
       <AuthForm
         title="Create Account"
         intro="Register to check out faster, save a wishlist and track every order."
+        action={signUp}
         fields={[
-          { name: "name", label: "Full Name", type: "text" },
-          { name: "email", label: "Email", type: "email" },
-          { name: "phone", label: "Phone", type: "tel" },
-          { name: "password", label: "Password", type: "password" },
+          { name: "name", label: "Full Name", type: "text", autoComplete: "name" },
+          { name: "email", label: "Email", type: "email", autoComplete: "email" },
+          { name: "phone", label: "Phone", type: "tel", autoComplete: "tel", required: false },
+          { name: "password", label: "Password", type: "password", autoComplete: "new-password" },
         ]}
         submitLabel="Register"
         footerText="Already have an account?"

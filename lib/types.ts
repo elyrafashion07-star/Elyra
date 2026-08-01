@@ -22,6 +22,8 @@ export type Collection = {
   title: string;
   description: string;
   group: "category" | "occasion" | "collection" | "budget" | "gender" | "gifting" | "feature";
+  /** Tile artwork in /public/images — omit to render the sized placeholder. */
+  image?: string;
 };
 
 export type NavItem = {

@@ -23,6 +23,6 @@ export const useWishlist = create<WishlistState>()(
       has: (handle) => get().handles.includes(handle),
       clear: () => set({ handles: [] }),
     }),
-    { name: "rakkhi-wishlist" },
+    { name: "elyrafashion-wishlist" },
   ),
 );

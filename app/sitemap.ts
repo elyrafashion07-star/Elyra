@@ -3,7 +3,7 @@ import { collections } from "@/data/collections";
 import { products } from "@/data/products";
 import { infoPages, policyPages } from "@/data/pages";
 
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://rakkhi.in";
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://elyrafashion.in";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [

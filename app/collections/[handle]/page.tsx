@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Container from "@/components/ui/Container";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
-import FixedImage from "@/components/ui/FixedImage";
 import CollectionView from "@/components/collection/CollectionView";
 import { collections, getCollection } from "@/data/collections";
 import { productsInCollection } from "@/data/products";
@@ -29,25 +28,16 @@ export default async function CollectionPage({ params }: { params: Promise<{ han
 
   const items = productsInCollection(handle);
 
+  // No banner here — banners live on the homepage only.
   return (
-    <>
-      {/* 1920 × 500 */}
-      <FixedImage
-        slot="collectionBanner"
-        alt={collection.title}
-        label={`${collection.title} banner`}
-        className="border-b border-line"
-      />
+    <Container className="py-8 sm:py-10">
+      <Breadcrumbs trail={[{ label: "Collections", href: "/collections" }, { label: collection.title }]} />
+      <h1 className="mt-4 text-3xl tracking-[0.04em] uppercase sm:text-4xl">{collection.title}</h1>
+      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{collection.description}</p>
 
-      <Container className="py-8 sm:py-10">
-        <Breadcrumbs trail={[{ label: "Collections", href: "/collections" }, { label: collection.title }]} />
-        <h1 className="mt-4 text-3xl tracking-[0.04em] uppercase sm:text-4xl">{collection.title}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{collection.description}</p>
-
-        <div className="mt-10">
-          <CollectionView products={items} />
-        </div>
-      </Container>
-    </>
+      <div className="mt-10">
+        <CollectionView products={items} />
+      </div>
+    </Container>
   );
 }

@@ -33,7 +33,7 @@ export default function HeroSlider() {
         <div className="flex">
           {heroSlides.map((slide, i) => (
             <div key={slide.title} className="relative min-w-0 flex-[0_0_100%]">
-              {/* Desktop 1920×800 · Mobile 800×1000 — both boxes are pre-sized. */}
+              {/* Desktop 1672×836 · Mobile 800×1000 — both boxes are pre-sized. */}
               <div className="hidden sm:block">
                 <FixedImage
                   slot="heroDesktop"
@@ -41,6 +41,7 @@ export default function HeroSlider() {
                   alt={slide.title}
                   label={`Hero slide ${i + 1} — desktop`}
                   priority={i === 0}
+                  imgClassName={`object-cover ${slide.focus ?? "object-center"}`}
                 />
               </div>
               <div className="sm:hidden">
@@ -50,13 +51,15 @@ export default function HeroSlider() {
                   alt={slide.title}
                   label={`Hero slide ${i + 1} — mobile`}
                   priority={i === 0}
+                  imgClassName={`object-cover ${slide.mobileFocus ?? "object-center"}`}
                 />
               </div>
 
-              {/* copy overlay */}
-              <div className="absolute inset-0 flex items-center">
-                <div className="mx-auto w-full max-w-[1400px] px-6 lg:px-10">
-                  <div className="max-w-lg bg-cream/80 p-6 backdrop-blur-sm sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+              {/* Copy sits over the art's empty left side on desktop; on mobile it drops
+                  to the bottom over a cream fade so it never covers a face. */}
+              <div className="absolute inset-0 flex items-end bg-linear-to-t from-cream from-25% via-cream/80 via-45% to-transparent to-72% sm:items-center sm:bg-none">
+                <div className="mx-auto w-full max-w-350 px-6 pb-10 sm:pb-0 lg:px-10">
+                  <div className="max-w-lg">
                     <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-gold">
                       {slide.eyebrow}
                     </p>

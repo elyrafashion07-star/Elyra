@@ -52,7 +52,7 @@ export const useCart = create<CartState>()(
       setCoupon: (coupon) => set({ coupon }),
       clear: () => set({ lines: [], note: "", coupon: "" }),
     }),
-    { name: "rakkhi-cart", partialize: (s) => ({ lines: s.lines, note: s.note, coupon: s.coupon }) },
+    { name: "elyrafashion-cart", partialize: (s) => ({ lines: s.lines, note: s.note, coupon: s.coupon }) },
   ),
 );
 

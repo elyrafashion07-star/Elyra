@@ -1,4 +1,4 @@
-# Rakkhi — 925 Sterling Silver Jewellery Store
+# Elyrafashion — 925 Sterling Silver Jewellery Store
 
 Next.js 15 (App Router) + React 19 + TypeScript + Tailwind v4 e-commerce front end,
 structured after `thesilverora.com`.
@@ -28,7 +28,7 @@ npm run lint
 | 5 | Shop by Category (10 tiles) | [ShopByCategory](components/home/ShopByCategory.tsx) |
 | 6 | Explore Our Collections (8 tiles) | [ExploreCollections](components/home/ExploreCollections.tsx) |
 | 7 | Shop by Budget (6 circles) | [ShopByBudget](components/home/ShopByBudget.tsx) |
-| 8 | Why Rakkhi (4 USP cards) | [WhyChooseUs](components/home/WhyChooseUs.tsx) |
+| 8 | Why Elyrafashion (4 USP cards) | [WhyChooseUs](components/home/WhyChooseUs.tsx) |
 | 9 | Shop by Gender (2 banners) | [ShopByGender](components/home/ShopByGender.tsx) |
 | 10 | The Gifting Edit (6 tiles) | [GiftingEdit](components/home/GiftingEdit.tsx) |
 | 11 | Video section | [VideoSection](components/home/VideoSection.tsx) |

@@ -14,7 +14,7 @@ export default function WhyChooseUs() {
   return (
     <section className="bg-sand py-14 sm:py-16">
       <Container>
-        <SectionHeading title="Why Rakkhi" />
+        <SectionHeading title="Why Elyrafashion" />
         <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {whyUs.map((item) => {
             const Icon = icons[item.icon as keyof typeof icons];

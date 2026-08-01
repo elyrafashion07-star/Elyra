@@ -10,7 +10,7 @@ export default function TrendingProducts() {
       <Container>
         <SectionHeading
           title="Top 15 Trending Products"
-          subtitle="Rakkhi brings you trend-setting sterling silver jewellery designed to enhance confidence, style and sophistication."
+          subtitle="Elyrafashion brings you trend-setting sterling silver jewellery designed to enhance confidence, style and sophistication."
         />
         <div className="mt-9">
           <ProductSlider products={trendingProducts} />

@@ -11,8 +11,9 @@ Matlab: aap jo image daloge, **layout bilkul nahi hilega** — box pehle se rese
 
 | Slot | Upload size | Ratio | Kaha dikhta hai |
 |---|---|---|---|
-| `logo` | **480 × 160** | 3:1 | Header wordmark |
-| `heroDesktop` | **1920 × 800** | 12:5 | Hero slider, ≥640px screen |
+| `logo` | **480 × 160** | 3:1 | Full logo lockup (spare slot) |
+| `logoMark` | **640 × 387** | ~5:3 | Header EF monogram — `public/images/logo/logo-mark.png` |
+| `heroDesktop` | **1672 × 836** | 2:1 | Hero slider, ≥640px screen |
 | `heroMobile` | **800 × 1000** | 4:5 | Hero slider, mobile |
 | `productCard` | **1000 × 1000** | 1:1 | Product cards (grid + sliders) |
 | `productMain` | **1200 × 1500** | 4:5 | PDP main image |
@@ -34,6 +35,9 @@ Yaad rakhne ke liye sirf **3 ratios**: `1:1`, `4:5`, `5:6`.
 
 Single source of truth → [lib/imageSizes.ts](lib/imageSizes.ts). Wahan number badla, poori site pe apply ho jayega.
 
+Header ka monogram `logo.jpeg` se crop kiya gaya hai (white background hata ke transparent PNG).
+Logo file badle to dobara banane ke liye: `python3 scripts/make-logo-mark.py`.
+
 ---
 
 ## 2. Image kaise daalein
@@ -54,7 +58,7 @@ Har image `<FixedImage />` se render hoti hai. Sirf `src` add karna hai:
 
 | Kya | File |
 |---|---|
-| Hero slides | [data/hero.ts](data/hero.ts) → `desktopSrc` + `mobileSrc` |
+| Hero slides | [data/hero.ts](data/hero.ts) → `desktopSrc` + `mobileSrc`, aur crop ke liye `focus` / `mobileFocus` |
 | Category / Collection / Budget / Gifting / Occasion tiles | [components/ui/TileCard.tsx](components/ui/TileCard.tsx) me `src` prop pass hota hai — tile list [data/collections.ts](data/collections.ts) me hai |
 | Product images | [components/product/ProductCard.tsx](components/product/ProductCard.tsx) aur [components/product/ProductDetail.tsx](components/product/ProductDetail.tsx) |
 | Gender banners | [components/home/ShopByGender.tsx](components/home/ShopByGender.tsx) |
@@ -84,7 +88,8 @@ Phir `ProductCard` me `src={product.images[0]}` aur `ProductDetail` me `src={pro
 
 ```
 public/images/
-├── hero/          1920×800 (desktop) · 800×1000 (mobile)
+├── banners/       b1 · b2 · b3 — 1672×941, hero slider (live)
+├── hero/          1672×836 (desktop) · 800×1000 (mobile)
 ├── products/      1000×1000 (card) · 1200×1500 (PDP) · 200×250 (thumb)
 ├── categories/    600×720
 ├── collections/   800×800

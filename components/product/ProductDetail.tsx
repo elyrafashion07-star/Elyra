@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Heart, Minus, Plus, RefreshCw, ShieldCheck, Truck } from "lucide-react";
+import DeliveryCheck from "@/components/product/DeliveryCheck";
 import FixedImage from "@/components/ui/FixedImage";
 import Badge from "@/components/ui/Badge";
 import Rating from "@/components/ui/Rating";
@@ -134,6 +135,8 @@ export default function ProductDetail({ product }: { product: Product }) {
               <Heart className={`h-5 w-5 ${wishlisted ? "fill-sale text-sale" : ""}`} />
             </button>
           </div>
+
+          <DeliveryCheck weight={product.weight} />
 
           <ul className="mt-6 space-y-2 text-[13px] text-ink-soft">
             <li className="flex items-center gap-2">

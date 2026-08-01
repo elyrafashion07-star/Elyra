@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
 import Logo from "@/components/layout/Logo";
 import MobileNav from "@/components/layout/MobileNav";
 import SearchOverlay from "@/components/layout/SearchOverlay";
@@ -26,8 +26,10 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-line bg-cream/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-4 py-3 sm:px-6 lg:px-10">
+      <header className="sticky top-0 z-40 border-b border-line bg-white">
+        {/* Three columns on desktop — logo left, nav centred, actions right. Wider than
+            the site container on purpose, so the logo and icons hug the page edges. */}
+        <div className="mx-auto flex max-w-500 items-center gap-4 px-4 py-2.5 sm:px-6 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-5 lg:px-8 lg:py-4 xl:px-12 2xl:gap-8 2xl:px-20 2xl:py-5">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -37,22 +39,21 @@ export default function Header() {
             <Menu className="h-6 w-6" />
           </button>
 
-          <Logo className="mr-auto lg:mr-0" />
+          <Logo className="mr-auto" />
 
           {/* desktop nav */}
-          <nav className="mx-auto hidden items-center lg:flex">
+          <nav className="hidden items-center gap-6 lg:flex xl:gap-9 2xl:gap-14">
             {mainNav.map((item) => (
               <div key={item.label} className="group relative">
                 <Link
                   href={item.href}
-                  className="flex items-center gap-1 px-3.5 py-3 text-[12px] font-medium tracking-[0.1em] uppercase text-ink-soft transition-colors hover:text-gold xl:px-4"
+                  className="block py-4 text-[12.5px] font-semibold tracking-[0.04em] whitespace-nowrap uppercase text-ink transition-colors hover:text-gold xl:text-[14px] 2xl:text-[15px]"
                 >
                   {item.label}
-                  {item.children ? <ChevronDown className="h-3 w-3" /> : null}
                 </Link>
 
                 {item.children ? (
-                  <div className="invisible absolute top-full left-0 z-50 min-w-[220px] translate-y-1 border border-line bg-white py-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                  <div className="invisible absolute top-full left-1/2 z-50 min-w-[220px] -translate-x-1/2 translate-y-1 border border-line bg-white py-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                     {item.children.map((child) => (
                       <Link
                         key={child.label}
@@ -69,20 +70,20 @@ export default function Header() {
           </nav>
 
           {/* actions */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-4 lg:ml-auto lg:gap-5 2xl:gap-6">
             <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search">
-              <Search className="h-5 w-5 transition-colors hover:text-gold" />
+              <Search strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
             </button>
-            <Link href="/account/login" aria-label="Account" className="hidden sm:block">
-              <User className="h-5 w-5 transition-colors hover:text-gold" />
+            <Link href="/account" aria-label="Account" className="hidden sm:block">
+              <User strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
             </Link>
             <Link href="/wishlist" aria-label="Wishlist" className="relative hidden sm:block">
-              <Heart className="h-5 w-5 transition-colors hover:text-gold" />
+              <Heart strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
               {wishCount > 0 ? <Count value={wishCount} /> : null}
             </Link>
-            <button type="button" onClick={openCart} aria-label="Open cart" className="relative">
-              <ShoppingBag className="h-5 w-5 transition-colors hover:text-gold" />
-              {count > 0 ? <Count value={count} /> : null}
+            <button type="button" onClick={openCart} aria-label={`Open cart, ${count} items`} className="relative">
+              <ShoppingBag strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
+              <Count value={count} />
             </button>
           </div>
         </div>
@@ -96,7 +97,7 @@ export default function Header() {
 
 function Count({ value }: { value: number }) {
   return (
-    <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white">
+    <span className="absolute -top-2 -right-2.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-ink px-1 text-[10px] font-semibold text-white">
       {value}
     </span>
   );

@@ -10,12 +10,12 @@ export const infoPages: StaticPage[] = [
     slug: "about-us",
     title: "About Us",
     intro:
-      "Rakkhi is a 925 sterling silver jewellery studio built on one idea — that fine silver should be worn, not saved for occasions.",
+      "Elyrafashion is a 925 sterling silver jewellery studio built on one idea — that fine silver should be worn, not saved for occasions.",
     sections: [
       {
         heading: "Our Story",
         body: [
-          "Rakkhi began with a small workbench and a stubborn belief: that everyday jewellery deserves the same care as heirloom pieces. What started as a handful of designs has grown into a full collection of rings, chains, anklets, pendants and men's silver — each one hallmarked, hand-finished and made to be worn hard.",
+          "Elyrafashion began with a small workbench and a stubborn belief: that everyday jewellery deserves the same care as heirloom pieces. What started as a handful of designs has grown into a full collection of rings, chains, anklets, pendants and men's silver — each one hallmarked, hand-finished and made to be worn hard.",
           "We work only in 925 sterling silver. Not plated brass, not alloy. Every batch is BIS hallmarked before it leaves our workshop, and every order ships with a certificate of authenticity.",
         ],
       },
@@ -43,7 +43,7 @@ export const infoPages: StaticPage[] = [
         heading: "Reach Us",
         body: [
           "WhatsApp and phone: +91 81693 02654 — Monday to Saturday, 10:00 AM to 7:00 PM IST.",
-          "Email: support@rakkhi.in — we answer every mail within one working day.",
+          "Email: support@elyrafashion.in — we answer every mail within one working day.",
         ],
       },
       {
@@ -87,7 +87,7 @@ export const infoPages: StaticPage[] = [
     slug: "certificate-of-authenticity",
     title: "Certificate of Authenticity",
     intro:
-      "Every Rakkhi piece ships with a certificate confirming its purity, weight and hallmark. Here is what that means.",
+      "Every Elyrafashion piece ships with a certificate confirming its purity, weight and hallmark. Here is what that means.",
     sections: [
       {
         heading: "What It Certifies",
@@ -151,7 +151,7 @@ export const policyPages: StaticPage[] = [
       {
         heading: "Your Rights",
         body: [
-          "Write to support@rakkhi.in to access, correct or delete your data. We action requests within 30 days.",
+          "Write to support@elyrafashion.in to access, correct or delete your data. We action requests within 30 days.",
         ],
       },
     ],
@@ -214,7 +214,7 @@ export const policyPages: StaticPage[] = [
   {
     slug: "terms-of-service",
     title: "Terms of Service",
-    intro: "The ground rules for buying from Rakkhi.",
+    intro: "The ground rules for buying from Elyrafashion.",
     sections: [
       {
         heading: "Orders & Pricing",

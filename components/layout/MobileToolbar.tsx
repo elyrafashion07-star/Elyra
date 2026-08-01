@@ -10,7 +10,7 @@ export default function MobileToolbar() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-cream lg:hidden">
       <Item href="/" icon={<Home className="h-5 w-5" />} label="Home" />
-      <Item href="/account/login" icon={<User className="h-5 w-5" />} label="Account" />
+      <Item href="/account" icon={<User className="h-5 w-5" />} label="Account" />
       <Item href="/wishlist" icon={<Heart className="h-5 w-5" />} label="Wishlist" />
       <button
         type="button"

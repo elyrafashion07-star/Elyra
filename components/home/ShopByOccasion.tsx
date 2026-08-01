@@ -21,6 +21,7 @@ export default function ShopByOccasion() {
                 href={`/collections/${handle}`}
                 title={c.title}
                 slot="occasionTile"
+                src={c.image}
                 rounded="rounded-full"
               />
             );

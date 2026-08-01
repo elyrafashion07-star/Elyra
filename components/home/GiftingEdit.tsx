@@ -18,6 +18,7 @@ export default function GiftingEdit() {
                 href={`/collections/${handle}`}
                 title={c.title}
                 slot="giftingTile"
+                src={c.image}
               />
             );
           })}

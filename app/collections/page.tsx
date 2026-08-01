@@ -8,7 +8,7 @@ import type { Collection } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "All Collections",
-  description: "Browse every Rakkhi collection — by category, occasion, budget and gifting.",
+  description: "Browse every Elyrafashion collection — by category, occasion, budget and gifting.",
 };
 
 const groups: { group: Collection["group"]; title: string; cols: string }[] = [

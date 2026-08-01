@@ -17,7 +17,7 @@ export default function AuthenticityBanner() {
           <div className="mx-auto w-full max-w-[500px]">
             <FixedImage
               slot="authenticityBanner"
-              alt="Rakkhi certificate of authenticity"
+              alt="Elyrafashion certificate of authenticity"
               label="Certificate banner"
               className="rounded-xl border border-line"
             />
@@ -29,7 +29,7 @@ export default function AuthenticityBanner() {
             </p>
             <h2 className="mt-3 text-3xl leading-tight lg:text-[38px]">Certificate of Authenticity</h2>
             <p className="mt-4 text-sm leading-relaxed text-ink-soft sm:text-[15px]">
-              Our certificate ensures every Rakkhi piece you receive is crafted from genuine,
+              Our certificate ensures every Elyrafashion piece you receive is crafted from genuine,
               high-quality 925 sterling silver. Each certificate verifies the purity and standard of
               the metal, giving you complete confidence in your purchase — and a record you can keep
               for resale, insurance or exchange.
