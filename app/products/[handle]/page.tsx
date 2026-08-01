@@ -71,9 +71,9 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
         <ProductDetail product={product} />
       </div>
 
-      <section className="mt-20">
+      <section className="mt-14 sm:mt-20">
         <SectionHeading title="You May Also Like" />
-        <div className="mt-9">
+        <div className="mt-6 sm:mt-9">
           <ProductSlider products={related} />
         </div>
       </section>

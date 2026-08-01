@@ -52,7 +52,7 @@ export default function DeliveryCheck({ weight }: { weight?: string }) {
   return (
     <div className="mt-5 border border-line p-4">
       <p className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.1em] uppercase text-ink">
-        <MapPin className="h-4 w-4 text-gold" /> Check delivery
+        <MapPin className="h-4 w-4 shrink-0 text-gold" /> Check delivery
       </p>
 
       <form onSubmit={check} className="mt-3 flex gap-2">

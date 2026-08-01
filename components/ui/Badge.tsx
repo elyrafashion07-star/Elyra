@@ -9,7 +9,7 @@ const styles: Record<string, string> = {
 export default function Badge({ label }: { label: string }) {
   return (
     <span
-      className={`inline-block px-2 py-1 text-[10px] font-semibold tracking-[0.14em] uppercase ${styles[label] ?? "bg-ink text-cream"}`}
+      className={`inline-block max-w-full truncate px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.08em] uppercase sm:px-2 sm:py-1 sm:text-[10px] sm:tracking-[0.14em] ${styles[label] ?? "bg-ink text-cream"}`}
     >
       {label}
     </span>

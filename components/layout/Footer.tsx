@@ -86,7 +86,8 @@ export default function Footer() {
 
       {/* copyright */}
       <div className="border-t border-cream/10">
-        <Container className="py-4 pb-20 text-center text-[11px] text-cream/45 lg:pb-4">
+        {/* Clearance for the fixed MobileToolbar now lives on <body> in app/layout.tsx. */}
+        <Container className="py-4 text-center text-[11px] text-cream/45">
           {site.copyright}
         </Container>
       </div>

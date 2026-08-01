@@ -8,6 +8,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import FixedImage from "@/components/ui/FixedImage";
 import { heroSlides } from "@/data/hero";
 
+/** Steps down with the banner height so the title always clears the art. */
+const heading =
+  "font-display text-base leading-tight xs:mt-1.5 xs:text-lg sm:mt-2 sm:text-2xl md:text-3xl lg:mt-3 lg:text-4xl xl:text-5xl";
+
 export default function HeroSlider() {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
     Autoplay({ delay: 5000, stopOnInteraction: false }),
@@ -33,8 +37,20 @@ export default function HeroSlider() {
         <div className="flex">
           {heroSlides.map((slide, i) => (
             <div key={slide.title} className="relative min-w-0 flex-[0_0_100%]">
-              {/* Desktop 1672×836 · Mobile 800×1000 — both boxes are pre-sized. */}
-              <div className="hidden sm:block">
+              {/* Phone + tablet get the art at its own 16:9 ratio, so the full width
+                  is always visible — object-contain keeps that true even if a future
+                  banner ships at a different shape. Desktop keeps the wider 2:1 box. */}
+              <div className="lg:hidden">
+                <FixedImage
+                  slot="heroBanner"
+                  src={slide.mobileSrc}
+                  alt={slide.title}
+                  label={`Hero slide ${i + 1}`}
+                  priority={i === 0}
+                  imgClassName="object-contain"
+                />
+              </div>
+              <div className="hidden lg:block">
                 <FixedImage
                   slot="heroDesktop"
                   src={slide.desktopSrc}
@@ -44,39 +60,31 @@ export default function HeroSlider() {
                   imgClassName={`object-cover ${slide.focus ?? "object-center"}`}
                 />
               </div>
-              <div className="sm:hidden">
-                <FixedImage
-                  slot="heroMobile"
-                  src={slide.mobileSrc}
-                  alt={slide.title}
-                  label={`Hero slide ${i + 1} — mobile`}
-                  priority={i === 0}
-                  imgClassName={`object-cover ${slide.mobileFocus ?? "object-center"}`}
-                />
-              </div>
 
-              {/* Copy sits over the art's empty left side on desktop; on mobile it drops
-                  to the bottom over a cream fade so it never covers a face. */}
-              <div className="absolute inset-0 flex items-end bg-linear-to-t from-cream from-25% via-cream/80 via-45% to-transparent to-72% sm:items-center sm:bg-none">
-                <div className="mx-auto w-full max-w-350 px-6 pb-10 sm:pb-0 lg:px-10">
-                  <div className="max-w-lg">
-                    <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-gold">
+              {/* Copy always sits over the art. The banner is uncropped 16:9 below lg,
+                  so vertical room is tight — the copy scales down step by step and
+                  sheds parts it can't fit: the body text goes below sm, and under xs
+                  (400px, where the art is ~225px tall) only the heading is left. */}
+              <div className="absolute inset-0 flex items-center bg-linear-to-r from-cream/85 via-cream/40 via-45% to-transparent to-70% lg:bg-none">
+                <div className="mx-auto w-full max-w-350 px-5 sm:px-6 lg:px-10">
+                  {/* Held to the art's empty left side so the subject on the right
+                      stays clear at every width. */}
+                  <div className="max-w-[58%] lg:max-w-lg">
+                    <p className="hidden text-[9px] font-semibold tracking-[0.22em] uppercase text-gold xs:block sm:text-[10px] lg:text-[11px]">
                       {slide.eyebrow}
                     </p>
                     {/* Only the first slide carries the page h1 — the rest are visual headings. */}
                     {i === 0 ? (
-                      <h1 className="mt-3 font-display text-3xl leading-tight sm:text-4xl lg:text-5xl">
-                        {slide.title}
-                      </h1>
+                      <h1 className={heading}>{slide.title}</h1>
                     ) : (
-                      <p className="mt-3 font-display text-3xl leading-tight sm:text-4xl lg:text-5xl">
-                        {slide.title}
-                      </p>
+                      <p className={heading}>{slide.title}</p>
                     )}
-                    <p className="mt-3 max-w-md text-sm text-ink-soft sm:text-[15px]">{slide.text}</p>
+                    <p className="mt-2 hidden max-w-md text-[13px] text-ink-soft sm:block lg:mt-3 lg:text-[15px]">
+                      {slide.text}
+                    </p>
                     <Link
                       href={slide.cta.href}
-                      className="mt-6 inline-block bg-ink px-7 py-3 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold"
+                      className="mt-2.5 hidden bg-ink px-4 py-2 text-[9px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold xs:inline-block sm:mt-4 sm:px-5 sm:py-2.5 sm:text-[10px] lg:mt-6 lg:px-7 lg:py-3 lg:text-[11px]"
                     >
                       {slide.cta.label}
                     </Link>

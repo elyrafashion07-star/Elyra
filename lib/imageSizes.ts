@@ -10,7 +10,7 @@
  *   logo                 480 × 160          3:1  (full lockup)
  *   logoMark             640 × 387          ~5:3 (EF monogram, transparent PNG)
  *   heroDesktop         1672 × 836          2:1  (banner art is 16:9 — 105px trims off)
- *   heroMobile           800 × 1000         4:5
+ *   heroBanner          1672 × 941         16:9 (phone + tablet — the art's own ratio, never cropped)
  *   productCard         1000 × 1000         1:1
  *   productMain         1200 × 1500         4:5
  *   productThumb         200 × 250          4:5
@@ -41,9 +41,15 @@ export const IMAGE_SIZES = {
   logoMark: { width: 640, height: 387, sizes: "110px" },
 
   heroDesktop: { width: 1672, height: 836, sizes: "100vw" },
-  heroMobile: { width: 800, height: 1000, sizes: "100vw" },
+  heroBanner: { width: 1672, height: 941, sizes: "100vw" },
 
-  productCard: { width: 1000, height: 1000, sizes: "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" },
+  // Matches ProductGrid's 2 / 3 / 4 columns (breaking at md and xl), capped by the
+  // 1400px container. ProductSlider overrides this — its cards are a different width.
+  productCard: {
+    width: 1000,
+    height: 1000,
+    sizes: "(max-width: 767px) 50vw, (max-width: 1279px) 33vw, 350px",
+  },
   productMain: { width: 1200, height: 1500, sizes: "(max-width: 1024px) 100vw, 600px" },
   productThumb: { width: 200, height: 250, sizes: "80px" },
 

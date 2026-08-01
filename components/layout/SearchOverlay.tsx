@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
@@ -16,6 +16,21 @@ export default function SearchOverlay({ open, onClose }: { open: boolean; onClos
   const results = query.trim() ? searchProducts(query).slice(0, 6) : [];
   const suggestions = query.trim() ? results : trendingProducts.slice(0, 4);
 
+  // Without this the page scrolls behind the overlay on touch devices.
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!query.trim()) return;
@@ -25,6 +40,7 @@ export default function SearchOverlay({ open, onClose }: { open: boolean; onClos
 
   return (
     <div
+      inert={!open}
       className={`fixed inset-0 z-50 transition-opacity duration-300 ${
         open ? "opacity-100" : "pointer-events-none opacity-0"
       }`}

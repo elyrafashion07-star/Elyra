@@ -10,6 +10,13 @@ import { mainNav } from "@/data/navigation";
 import { cartCount, useCart } from "@/lib/store/cart";
 import { useWishlist } from "@/lib/store/wishlist";
 
+/**
+ * The header icons are 22–24px, which is well under a comfortable thumb target.
+ * The `after` pseudo-element grows the hit area to ~42px without taking up any
+ * layout space, so the desktop spacing stays exactly as designed.
+ */
+const tapTarget = "relative after:absolute after:-inset-2.5 after:content-['']";
+
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -27,14 +34,15 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-line bg-white">
-        {/* Three columns on desktop — logo left, nav centred, actions right. Wider than
-            the site container on purpose, so the logo and icons hug the page edges. */}
-        <div className="mx-auto flex max-w-500 items-center gap-4 px-4 py-2.5 sm:px-6 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-5 lg:px-8 lg:py-4 xl:px-12 2xl:gap-8 2xl:px-20 2xl:py-5">
+        {/* Three columns from xl up — logo left, nav centred, actions right. Wider than
+            the site container on purpose, so the logo and icons hug the page edges.
+            Below xl the full nav can't fit on one line, so it collapses to the drawer. */}
+        <div className="mx-auto flex max-w-500 items-center gap-4 px-4 py-2.5 sm:px-6 lg:px-8 lg:py-3.5 xl:grid xl:grid-cols-[1fr_auto_1fr] xl:gap-5 xl:px-10 xl:py-4 2xl:gap-8 2xl:px-20 2xl:py-5">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
-            className="lg:hidden"
+            className={`${tapTarget} xl:hidden`}
           >
             <Menu className="h-6 w-6" />
           </button>
@@ -42,12 +50,12 @@ export default function Header() {
           <Logo className="mr-auto" />
 
           {/* desktop nav */}
-          <nav className="hidden items-center gap-6 lg:flex xl:gap-9 2xl:gap-14">
+          <nav className="hidden items-center xl:flex xl:gap-6 2xl:gap-12">
             {mainNav.map((item) => (
               <div key={item.label} className="group relative">
                 <Link
                   href={item.href}
-                  className="block py-4 text-[12.5px] font-semibold tracking-[0.04em] whitespace-nowrap uppercase text-ink transition-colors hover:text-gold xl:text-[14px] 2xl:text-[15px]"
+                  className="block py-4 text-[13px] font-semibold tracking-[0.04em] whitespace-nowrap uppercase text-ink transition-colors hover:text-gold 2xl:text-[15px]"
                 >
                   {item.label}
                 </Link>
@@ -70,18 +78,18 @@ export default function Header() {
           </nav>
 
           {/* actions */}
-          <div className="flex items-center gap-4 lg:ml-auto lg:gap-5 2xl:gap-6">
-            <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search">
+          <div className="flex items-center gap-5 xl:ml-auto xl:gap-5 2xl:gap-6">
+            <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search" className={tapTarget}>
               <Search strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
             </button>
-            <Link href="/account" aria-label="Account" className="hidden sm:block">
+            <Link href="/account" aria-label="Account" className={`hidden sm:block ${tapTarget}`}>
               <User strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
             </Link>
-            <Link href="/wishlist" aria-label="Wishlist" className="relative hidden sm:block">
+            <Link href="/wishlist" aria-label="Wishlist" className={`hidden sm:block ${tapTarget}`}>
               <Heart strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
               {wishCount > 0 ? <Count value={wishCount} /> : null}
             </Link>
-            <button type="button" onClick={openCart} aria-label={`Open cart, ${count} items`} className="relative">
+            <button type="button" onClick={openCart} aria-label={`Open cart, ${count} items`} className={tapTarget}>
               <ShoppingBag strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
               <Count value={count} />
             </button>

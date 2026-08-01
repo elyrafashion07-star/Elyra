@@ -37,7 +37,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${display.variable} ${body.variable} antialiased`}>
+      {/* pb clears the fixed MobileToolbar (h-14) so the footer isn't hidden behind it. */}
+      <body className={`${display.variable} ${body.variable} pb-14 antialiased xl:pb-0`}>
         <AnnouncementBar />
         <Header />
         <main>{children}</main>

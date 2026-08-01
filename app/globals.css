@@ -17,6 +17,11 @@
   --font-display: var(--font-display), "Times New Roman", serif;
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
 
+  /* ── Breakpoints ───────────────────────────────────────── */
+  /* 400px — below this a 16:9 hero is under ~225px tall, so the overlay copy
+     drops to the heading alone. */
+  --breakpoint-xs: 25rem;
+
   /* ── Motion ────────────────────────────────────────────── */
   --animate-marquee: marquee 26s linear infinite;
   --animate-fade-up: fade-up 0.5s ease-out both;

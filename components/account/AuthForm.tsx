@@ -17,6 +17,7 @@ export default function AuthForm({
   footerLink,
   action,
   next,
+  initialError,
 }: {
   title: string;
   intro: string;
@@ -26,8 +27,11 @@ export default function AuthForm({
   footerLink: { label: string; href: string };
   action: (prev: AuthState, formData: FormData) => Promise<AuthState>;
   next?: string;
+  /** Shown before the form is submitted — e.g. a dead link bounced back here. */
+  initialError?: string;
 }) {
   const [state, formAction] = useActionState<AuthState, FormData>(action, {});
+  const error = state.error ?? initialError;
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -52,9 +56,9 @@ export default function AuthForm({
           </label>
         ))}
 
-        {state.error ? (
+        {error ? (
           <p role="alert" className="border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
-            {state.error}
+            {error}
           </p>
         ) : null}
 

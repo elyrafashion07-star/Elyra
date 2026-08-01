@@ -6,6 +6,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
 import type { Product } from "@/lib/types";
 
+/** Mirrors the flex-basis steps below — the grid's default hint is too small here. */
+const CARD_SIZES =
+  "(max-width: 639px) 70vw, (max-width: 767px) 45vw, (max-width: 1023px) 31vw, (max-width: 1279px) 24vw, 280px";
+
 export default function ProductSlider({ products }: { products: Product[] }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
@@ -25,7 +29,7 @@ export default function ProductSlider({ products }: { products: Product[] }) {
               key={p.handle}
               className="min-w-0 flex-[0_0_70%] sm:flex-[0_0_45%] md:flex-[0_0_31%] lg:flex-[0_0_23.5%] xl:flex-[0_0_19%]"
             >
-              <ProductCard product={p} />
+              <ProductCard product={p} sizes={CARD_SIZES} />
             </div>
           ))}
         </div>

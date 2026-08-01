@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Heart, User, X } from "lucide-react";
 import { mainNav } from "@/data/navigation";
@@ -9,17 +9,38 @@ import { site } from "@/data/site";
 export default function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  // Lock body scroll while the drawer is open, same as CartDrawer.
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   return (
     <>
       <div
         onClick={onClose}
         aria-hidden
-        className={`fixed inset-0 z-50 bg-ink/40 transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 z-50 bg-ink/40 transition-opacity duration-300 xl:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
       <aside
-        className={`fixed top-0 left-0 z-50 flex h-dvh w-[86%] max-w-sm flex-col bg-cream transition-transform duration-300 lg:hidden ${
+        role="dialog"
+        aria-modal="true"
+        aria-label="Main menu"
+        // Off-screen links stay tabbable otherwise — `inert` keeps them out of the
+        // tab order without killing the slide-out transition the way `hidden` would.
+        inert={!open}
+        className={`fixed top-0 left-0 z-50 flex h-dvh w-[86%] max-w-sm flex-col bg-cream transition-transform duration-300 xl:hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -64,7 +85,7 @@ export default function MobileNav({ open, onClose }: { open: boolean; onClose: (
                         key={child.label}
                         href={child.href}
                         onClick={onClose}
-                        className="block px-8 py-2.5 text-[13px] text-ink-soft"
+                        className="block px-8 py-3 text-[13px] text-ink-soft"
                       >
                         {child.label}
                       </Link>
@@ -76,11 +97,11 @@ export default function MobileNav({ open, onClose }: { open: boolean; onClose: (
           })}
         </nav>
 
-        <div className="border-t border-line px-5 py-4 text-sm">
-          <Link href="/account" onClick={onClose} className="flex items-center gap-2 py-2">
+        <div className="shrink-0 border-t border-line px-5 py-3 text-sm">
+          <Link href="/account" onClick={onClose} className="flex items-center gap-2 py-2.5">
             <User className="h-4 w-4" /> My Account
           </Link>
-          <Link href="/wishlist" onClick={onClose} className="flex items-center gap-2 py-2">
+          <Link href="/wishlist" onClick={onClose} className="flex items-center gap-2 py-2.5">
             <Heart className="h-4 w-4" /> Wishlist
           </Link>
           <p className="mt-3 text-xs text-muted">{site.phone}</p>

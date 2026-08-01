@@ -7,12 +7,11 @@ export type HeroSlide = {
   desktopSrc?: string;
   mobileSrc?: string;
   /**
-   * Where to anchor the crop, since the 16:9 art is squeezed into a 2:1 box on
-   * desktop (105px comes off) and a 4:5 box on mobile (the left negative space
-   * goes). Set per slide so no face or product gets cut.
+   * Desktop-only. The 16:9 art is squeezed into a 2:1 box there (105px comes
+   * off), so anchor the crop per slide and no face or product gets cut. Phone
+   * and tablet show the art at its own 16:9 ratio, so nothing is cropped.
    */
   focus?: string;
-  mobileFocus?: string;
 };
 
 export const heroSlides: HeroSlide[] = [
@@ -24,7 +23,6 @@ export const heroSlides: HeroSlide[] = [
     desktopSrc: "/images/banners/b1.PNG",
     mobileSrc: "/images/banners/b1.PNG",
     focus: "object-center",
-    mobileFocus: "object-right",
   },
   {
     eyebrow: "New Arrivals",
@@ -35,7 +33,6 @@ export const heroSlides: HeroSlide[] = [
     mobileSrc: "/images/banners/b2.PNG",
     // Hair reaches the very top edge — keep the top, trim the flowers instead.
     focus: "object-top",
-    mobileFocus: "object-right",
   },
   {
     eyebrow: "The Luxe Collection",
@@ -46,6 +43,5 @@ export const heroSlides: HeroSlide[] = [
     mobileSrc: "/images/banners/b3.PNG",
     // Rings sit on the bottom edge — trim the bokeh at the top instead.
     focus: "object-bottom",
-    mobileFocus: "object-right",
   },
 ];

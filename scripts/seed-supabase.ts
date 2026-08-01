@@ -77,7 +77,8 @@ const heroRows = heroSlides.map((s, i) => ({
   desktop_src: s.desktopSrc ?? null,
   mobile_src: s.mobileSrc ?? null,
   focus: s.focus ?? null,
-  mobile_focus: s.mobileFocus ?? null,
+  // Phone + tablet show the banner uncropped now, so there is no crop to anchor.
+  mobile_focus: null,
   active: true,
 }));
 

@@ -30,7 +30,9 @@ export default function ProductDetail({ product }: { product: Product }) {
     <>
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-14">
         {/* ── gallery ─────────────────────────────────────── */}
-        <div className="flex flex-col-reverse gap-4 sm:flex-row">
+        {/* min-w-0: grid children default to min-width:auto, so without it the
+            horizontally-scrolling thumb strip widens the whole page. */}
+        <div className="flex min-w-0 flex-col-reverse gap-4 sm:flex-row">
           <div className="flex gap-3 overflow-x-auto sm:w-20 sm:flex-col sm:overflow-visible no-scrollbar">
             {slots.map((i) => (
               <button
@@ -65,23 +67,23 @@ export default function ProductDetail({ product }: { product: Product }) {
         </div>
 
         {/* ── info ────────────────────────────────────────── */}
-        <div>
-          <h1 className="text-3xl leading-tight lg:text-4xl">{product.title}</h1>
+        <div className="min-w-0">
+          <h1 className="text-2xl leading-tight sm:text-3xl lg:text-4xl">{product.title}</h1>
           <div className="mt-3">
             <Rating value={product.rating} count={product.reviews} />
           </div>
 
-          <div className="mt-5 flex flex-wrap items-baseline gap-3">
-            <span className="text-2xl font-semibold">{formatPrice(product.price)}</span>
+          <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:mt-5">
+            <span className="text-xl font-semibold sm:text-2xl">{formatPrice(product.price)}</span>
             {product.compareAt ? (
-              <span className="text-base text-muted line-through">{formatPrice(product.compareAt)}</span>
+              <span className="text-sm text-muted line-through sm:text-base">{formatPrice(product.compareAt)}</span>
             ) : null}
             {off ? <span className="text-sm font-semibold text-sale">{off}% off</span> : null}
           </div>
           <p className="mt-1 text-[12px] text-muted">Inclusive of all taxes. Free shipping across India.</p>
 
           {product.variants ? (
-            <div className="mt-7">
+            <div className="mt-6 sm:mt-7">
               <p className="mb-2 text-[11px] font-semibold tracking-[0.16em] uppercase">
                 {product.variants.label}
               </p>
@@ -104,13 +106,17 @@ export default function ProductDetail({ product }: { product: Product }) {
             </div>
           ) : null}
 
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          {/* Below sm the 190px button can't share a line with the stepper and the
+              heart — it used to push the heart onto a row of its own. `order-last
+              w-full` gives the button its own full-width row instead, with the heart
+              pinned to the right of the stepper. From sm it's one row again. */}
+          <div className="mt-6 flex flex-wrap items-center gap-3 sm:mt-7">
             <div className="flex items-center border border-line bg-white">
-              <button type="button" aria-label="Decrease quantity" onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-3">
+              <button type="button" aria-label="Decrease quantity" onClick={() => setQty(Math.max(1, qty - 1))} className="px-3.5 py-3.5 sm:px-3 sm:py-3">
                 <Minus className="h-3.5 w-3.5" />
               </button>
               <span className="min-w-9 text-center text-sm">{qty}</span>
-              <button type="button" aria-label="Increase quantity" onClick={() => setQty(qty + 1)} className="px-3 py-3">
+              <button type="button" aria-label="Increase quantity" onClick={() => setQty(qty + 1)} className="px-3.5 py-3.5 sm:px-3 sm:py-3">
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -121,7 +127,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               onClick={() =>
                 add({ handle: product.handle, title: product.title, price: product.price, variant }, qty)
               }
-              className="min-w-[190px] flex-1 bg-ink px-8 py-3.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold disabled:cursor-not-allowed disabled:bg-muted"
+              className="order-last w-full bg-ink px-8 py-3.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold disabled:cursor-not-allowed disabled:bg-muted sm:order-0 sm:w-auto sm:min-w-47.5 sm:flex-1"
             >
               {product.soldOut ? "Sold Out" : "Add to Cart"}
             </button>
@@ -130,7 +136,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               type="button"
               onClick={() => toggleWish(product.handle)}
               aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              className="flex h-[50px] w-[50px] items-center justify-center border border-line bg-white transition-colors hover:border-gold"
+              className="ml-auto flex h-12.5 w-12.5 shrink-0 items-center justify-center border border-line bg-white transition-colors hover:border-gold sm:ml-0"
             >
               <Heart className={`h-5 w-5 ${wishlisted ? "fill-sale text-sale" : ""}`} />
             </button>
@@ -138,27 +144,31 @@ export default function ProductDetail({ product }: { product: Product }) {
 
           <DeliveryCheck weight={product.weight} />
 
+          {/* These lines wrap to two or three rows on a narrow phone, so the icons
+              need shrink-0 and top alignment rather than being centred and squashed. */}
           <ul className="mt-6 space-y-2 text-[13px] text-ink-soft">
-            <li className="flex items-center gap-2">
-              <Truck className="h-4 w-4 text-gold" /> Free shipping · dispatched in 24–48 hours
+            <li className="flex items-start gap-2">
+              <Truck className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> Free shipping · dispatched in 24–48 hours
             </li>
-            <li className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4 text-gold" /> Easy 7-day returns and free size exchange
+            <li className="flex items-start gap-2">
+              <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> Easy 7-day returns and free size exchange
             </li>
-            <li className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-gold" /> BIS hallmarked · certificate of authenticity included
+            <li className="flex items-start gap-2">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> BIS hallmarked · certificate of authenticity included
             </li>
           </ul>
 
           {/* tabs */}
-          <div className="mt-10 border-t border-line">
-            <div className="flex gap-6 border-b border-line">
+          <div className="mt-8 border-t border-line sm:mt-10">
+            {/* All three labels together run ~250px, so the gap and type shrink on
+                phones rather than letting the row spill off-screen. */}
+            <div className="flex gap-4 border-b border-line sm:gap-6">
               {TABS.map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setTab(t)}
-                  className={`-mb-px border-b-2 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase transition-colors ${
+                  className={`-mb-px border-b-2 py-3 text-[10px] font-semibold tracking-[0.08em] whitespace-nowrap uppercase transition-colors sm:text-[11px] sm:tracking-[0.12em] ${
                     tab === t ? "border-gold text-ink" : "border-transparent text-muted hover:text-ink"
                   }`}
                 >
@@ -171,7 +181,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               {tab === "Description" ? <p>{product.description}</p> : null}
 
               {tab === "Details" ? (
-                <dl className="grid grid-cols-[130px_1fr] gap-y-2 text-[13px]">
+                <dl className="grid grid-cols-[92px_1fr] gap-y-2 text-[13px] sm:grid-cols-[130px_1fr]">
                   <dt className="text-muted">Material</dt>
                   <dd>{product.material}</dd>
                   <dt className="text-muted">Weight</dt>
