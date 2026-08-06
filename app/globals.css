@@ -51,6 +51,13 @@
     font-family: var(--font-display);
     font-weight: 400;
   }
+  /* Tailwind v4 resets buttons to `cursor: default`. Links already show the hand,
+     so restore it here — otherwise half the clickable UI doesn't look clickable. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary {
+    cursor: pointer;
+  }
   ::selection {
     background: var(--color-gold);
     color: #fff;

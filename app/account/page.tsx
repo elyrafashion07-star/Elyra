@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { Heart, LogOut, Package, User } from "lucide-react";
 import Container from "@/components/ui/Container";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import SignOutForm from "@/components/account/SignOutForm";
 import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/app/account/actions";
 
 export const metadata: Metadata = { title: "My Account" };
 
@@ -39,14 +39,14 @@ export default async function AccountPage() {
           </p>
         </div>
 
-        <form action={signOut}>
+        <SignOutForm>
           <button
             type="submit"
             className="flex items-center gap-2 border border-line px-5 py-2.5 text-[11px] font-semibold tracking-[0.16em] uppercase transition-colors hover:border-gold hover:text-gold"
           >
             <LogOut className="h-3.5 w-3.5" /> Sign Out
           </button>
-        </form>
+        </SignOutForm>
       </div>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-3">

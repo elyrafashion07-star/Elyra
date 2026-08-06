@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag } from "lucide-react";
+import AccountMenu from "@/components/account/AccountMenu";
 import Logo from "@/components/layout/Logo";
 import MobileNav from "@/components/layout/MobileNav";
 import SearchOverlay from "@/components/layout/SearchOverlay";
+import Tooltip from "@/components/layout/Tooltip";
 import { mainNav } from "@/data/navigation";
 import { cartCount, useCart } from "@/lib/store/cart";
 import { useWishlist } from "@/lib/store/wishlist";
@@ -79,12 +81,18 @@ export default function Header() {
 
           {/* actions */}
           <div className="flex items-center gap-5 xl:ml-auto xl:gap-5 2xl:gap-6">
-            <button type="button" onClick={() => setSearchOpen(true)} aria-label="Search" className={tapTarget}>
-              <Search strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search"
+              className={`group ${tapTarget}`}
+            >
+              <Search strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors group-hover:text-gold 2xl:h-6 2xl:w-6" />
+              <Tooltip label="Search" />
             </button>
-            <Link href="/account" aria-label="Account" className={`hidden sm:block ${tapTarget}`}>
-              <User strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
-            </Link>
+            <div className="hidden sm:block">
+              <AccountMenu className={tapTarget} />
+            </div>
             <Link href="/wishlist" aria-label="Wishlist" className={`hidden sm:block ${tapTarget}`}>
               <Heart strokeWidth={1.5} className="h-5.5 w-5.5 transition-colors hover:text-gold 2xl:h-6 2xl:w-6" />
               {wishCount > 0 ? <Count value={wishCount} /> : null}

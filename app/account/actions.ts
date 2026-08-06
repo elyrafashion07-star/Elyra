@@ -5,7 +5,20 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export type AuthState = { error?: string; notice?: string };
+export type AuthState = {
+  error?: string;
+  notice?: string;
+  /**
+   * What the user typed, echoed back on failure.
+   *
+   * React 19 resets an uncontrolled `<form action>` once the action settles, so
+   * without this every field empties on a rejected submit — and because the
+   * inputs are `required`, the retry is then blocked by native validation
+   * before it ever reaches the server. AuthForm feeds these into `defaultValue`,
+   * which is what a form reset restores to. Passwords are never echoed.
+   */
+  values?: Record<string, string>;
+};
 
 /**
  * Absolute origin for links that come back from an email.
@@ -34,8 +47,9 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const next = safeNext(formData.get("next"));
+  const values = { email };
 
-  if (!email || !password) return { error: "Enter your email and password." };
+  if (!email || !password) return { error: "Enter your email and password.", values };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -44,9 +58,9 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
     // Supabase says "Invalid login credentials" for both wrong password and
     // unknown email — on purpose, so it cannot be used to enumerate accounts.
     if (error.message === "Email not confirmed") {
-      return { error: "Please confirm your email first — check your inbox for the link." };
+      return { error: "Please confirm your email first — check your inbox for the link.", values };
     }
-    return { error: error.message };
+    return { error: error.message, values };
   }
 
   revalidatePath("/", "layout");
@@ -58,9 +72,10 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   const email = String(formData.get("email") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const values = { name: fullName, email, phone };
 
-  if (!email || !password) return { error: "Enter your email and password." };
-  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (!email || !password) return { error: "Enter your email and password.", values };
+  if (password.length < 8) return { error: "Password must be at least 8 characters.", values };
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -77,7 +92,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     },
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: error.message, values };
 
   // With "Confirm email" on (Supabase default) there is no session yet.
   if (!data.session) {

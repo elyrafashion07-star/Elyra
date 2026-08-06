@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Heart, User, X } from "lucide-react";
+import { ChevronDown, Heart, LogOut, User, X } from "lucide-react";
+import SignOutForm from "@/components/account/SignOutForm";
 import { mainNav } from "@/data/navigation";
 import { site } from "@/data/site";
+import { displayName, useAuth } from "@/lib/store/auth";
 
 export default function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const { user } = useAuth();
 
   // Lock body scroll while the drawer is open, same as CartDrawer.
   useEffect(() => {
@@ -98,12 +101,28 @@ export default function MobileNav({ open, onClose }: { open: boolean; onClose: (
         </nav>
 
         <div className="shrink-0 border-t border-line px-5 py-3 text-sm">
+          {user ? (
+            <p className="truncate border-b border-line/60 pb-2.5 text-[13px]">
+              <span className="text-muted">Signed in as </span>
+              <span className="font-medium">{displayName(user)}</span>
+            </p>
+          ) : null}
+
           <Link href="/account" onClick={onClose} className="flex items-center gap-2 py-2.5">
-            <User className="h-4 w-4" /> My Account
+            <User className="h-4 w-4" /> {user ? "My Account" : "Sign In"}
           </Link>
           <Link href="/wishlist" onClick={onClose} className="flex items-center gap-2 py-2.5">
             <Heart className="h-4 w-4" /> Wishlist
           </Link>
+
+          {user ? (
+            <SignOutForm onSubmitted={onClose}>
+              <button type="submit" className="flex items-center gap-2 py-2.5">
+                <LogOut className="h-4 w-4" /> Sign Out
+              </button>
+            </SignOutForm>
+          ) : null}
+
           <p className="mt-3 text-xs text-muted">{site.phone}</p>
         </div>
       </aside>

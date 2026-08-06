@@ -49,6 +49,12 @@ export default function AuthForm({
             <input
               name={f.name}
               type={f.type}
+              // React 19 resets the form once the action settles, restoring each
+              // input to its defaultValue. Seeding that from what was just
+              // submitted is what stops a rejected sign-in from wiping the
+              // email the user already typed. Passwords are deliberately absent
+              // from state.values, so they clear — which is what you want.
+              defaultValue={state.values?.[f.name] ?? ""}
               autoComplete={f.autoComplete}
               required={f.required ?? true}
               className="w-full border border-line bg-white px-4 py-3 text-sm outline-none focus:border-gold"

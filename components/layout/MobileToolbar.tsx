@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { Heart, Home, Search, ShoppingBag, User } from "lucide-react";
+import { firstName, useAuth } from "@/lib/store/auth";
 import { useCart } from "@/lib/store/cart";
 
 export default function MobileToolbar() {
   const openCart = useCart((s) => s.open);
+  const { user } = useAuth();
 
   return (
     <nav
@@ -13,7 +15,11 @@ export default function MobileToolbar() {
       className="fixed inset-x-0 bottom-0 z-30 grid h-14 grid-cols-5 border-t border-line bg-cream xl:hidden"
     >
       <Item href="/" icon={<Home className="h-5 w-5" />} label="Home" />
-      <Item href="/account" icon={<User className="h-5 w-5" />} label="Account" />
+      <Item
+        href="/account"
+        icon={<User className="h-5 w-5" />}
+        label={user ? firstName(user) : "Account"}
+      />
       <Item href="/wishlist" icon={<Heart className="h-5 w-5" />} label="Wishlist" />
       <button type="button" onClick={openCart} className={cell}>
         <ShoppingBag className="h-5 w-5 shrink-0" />
