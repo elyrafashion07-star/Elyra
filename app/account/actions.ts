@@ -39,8 +39,12 @@ async function siteOrigin(): Promise<string> {
   return `${proto}://${host}`;
 }
 
-/** Where a recovery link has to land — the form that sets the new password. */
-const RESET_PATH = "/account/reset-password";
+/**
+ * Where a recovery link has to land. /auth/reset redeems the token and sends
+ * people on to the form itself — see the note there for why this URL carries no
+ * query string of its own.
+ */
+const RESET_CALLBACK = "/auth/reset";
 
 /**
  * Supabase's messages are written for whoever is reading the server logs, not
@@ -151,16 +155,23 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
 /**
  * Step 1 of a password reset: email the user a recovery link.
  *
- * `redirectTo` points at /auth/callback because that is where Supabase's *stock*
- * recovery template lands — it verifies the token itself and bounces here with
- * `?code=`. The `next` rides along so the callback drops people on the form
- * instead of the account page. If the recovery template is ever customised to
- * pass `{{ .TokenHash }}`, point it at /auth/confirm instead:
+ * `redirectTo` is a bare path on purpose. It used to be /auth/callback with the
+ * destination hung off a `?next=`, and Supabase quietly refused to redirect to
+ * it — a query string keeps the URL from matching the Redirect URLs allowlist,
+ * and the fallback is the Site URL, so people landed on the homepage signed in
+ * and never saw the form. /auth/reset needs nothing on the query string because
+ * it already knows where it is sending them.
  *
- *   {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/account/reset-password
+ * That exact URL still has to be listed under Authentication → URL
+ * Configuration → Redirect URLs, or Supabase refuses to redirect to it:
  *
- * Whichever is used, that URL must be listed under Authentication → URL
- * Configuration → Redirect URLs or Supabase refuses to redirect to it.
+ *   https://<site>/auth/reset
+ *
+ * /auth/reset handles both the stock template and a customised one that passes
+ * `{{ .TokenHash }}`; the custom one is worth setting up, since it also works
+ * when the email is opened on a different device:
+ *
+ *   {{ .SiteURL }}/auth/reset?token_hash={{ .TokenHash }}&type=recovery
  */
 export async function requestPasswordReset(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
@@ -170,7 +181,7 @@ export async function requestPasswordReset(_prev: AuthState, formData: FormData)
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${await siteOrigin()}/auth/callback?next=${encodeURIComponent(RESET_PATH)}`,
+    redirectTo: `${await siteOrigin()}${RESET_CALLBACK}`,
   });
 
   // Rate limits and a dead SMTP setup are worth surfacing; a missing account is
