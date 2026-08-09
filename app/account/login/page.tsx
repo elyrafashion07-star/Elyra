@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Login" };
 
 /** Codes the /auth/callback and /auth/confirm routes bounce back here. */
 const LINK_ERRORS: Record<string, string> = {
-  link_expired: "That confirmation link has expired or was already used. Sign in below, or register again to get a fresh one.",
+  link_expired: "That link has expired or was already used. Sign in below, or request a fresh one.",
   otp_expired: "That confirmation link has expired. Register again to get a fresh one.",
   access_denied: "That confirmation link is no longer valid. Register again to get a fresh one.",
   invalid_link: "That link was incomplete. Please open the most recent email we sent you.",
@@ -32,6 +32,7 @@ export default async function LoginPage({
           { name: "email", label: "Email", type: "email", autoComplete: "email" },
           { name: "password", label: "Password", type: "password", autoComplete: "current-password" },
         ]}
+        secondaryLink={{ label: "Forgot password?", href: "/account/forgot-password" }}
         submitLabel="Sign In"
         footerText="New here?"
         footerLink={{ label: "Create an account", href: "/account/register" }}

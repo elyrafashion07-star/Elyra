@@ -39,7 +39,7 @@ export default function Header() {
         {/* Three columns from xl up — logo left, nav centred, actions right. Wider than
             the site container on purpose, so the logo and icons hug the page edges.
             Below xl the full nav can't fit on one line, so it collapses to the drawer. */}
-        <div className="mx-auto flex max-w-500 items-center gap-4 px-4 py-2.5 sm:px-6 lg:px-8 lg:py-3.5 xl:grid xl:grid-cols-[1fr_auto_1fr] xl:gap-5 xl:px-10 xl:py-4 2xl:gap-8 2xl:px-20 2xl:py-5">
+        <div className="mx-auto flex max-w-500 items-center gap-4 px-4 py-1.5 sm:px-6 lg:px-8 lg:py-2 xl:grid xl:grid-cols-[1fr_auto_1fr] xl:gap-5 xl:px-10 xl:py-2.5 2xl:gap-8 2xl:px-20 2xl:py-3">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -57,7 +57,7 @@ export default function Header() {
               <div key={item.label} className="group relative">
                 <Link
                   href={item.href}
-                  className="block py-4 text-[13px] font-semibold tracking-[0.04em] whitespace-nowrap uppercase text-ink transition-colors hover:text-gold 2xl:text-[15px]"
+                  className="block py-3 text-[13px] font-semibold tracking-[0.04em] whitespace-nowrap uppercase text-ink transition-colors hover:text-gold 2xl:text-[15px]"
                 >
                   {item.label}
                 </Link>

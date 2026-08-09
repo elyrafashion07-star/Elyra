@@ -19,7 +19,7 @@ export default function Logo({ className = "" }: { className?: string }) {
         src="/images/logo/logo-mark.png"
         alt={`${site.name} monogram`}
         priority
-        className="w-19.5 sm:w-23 2xl:w-28"
+        className="w-16 sm:w-19 2xl:w-22"
         imgClassName="object-contain"
       />
       <span className="text-[9px] tracking-[0.26em] text-ink-soft uppercase sm:text-[10px]">

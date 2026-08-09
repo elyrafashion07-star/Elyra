@@ -15,23 +15,30 @@ export default function AuthForm({
   submitLabel,
   footerText,
   footerLink,
+  secondaryLink,
   action,
   next,
   initialError,
+  initialNotice,
 }: {
   title: string;
   intro: string;
   fields: Field[];
   submitLabel: string;
-  footerText: string;
-  footerLink: { label: string; href: string };
+  /** Omit both to drop the footer — the reset form has nowhere useful to point. */
+  footerText?: string;
+  footerLink?: { label: string; href: string };
+  /** Small right-aligned link under the fields, e.g. "Forgot password?". */
+  secondaryLink?: { label: string; href: string };
   action: (prev: AuthState, formData: FormData) => Promise<AuthState>;
   next?: string;
   /** Shown before the form is submitted — e.g. a dead link bounced back here. */
   initialError?: string;
+  initialNotice?: string;
 }) {
   const [state, formAction] = useActionState<AuthState, FormData>(action, {});
   const error = state.error ?? initialError;
+  const notice = state.notice ?? initialNotice;
 
   return (
     <div className="mx-auto w-full max-w-md">
@@ -62,27 +69,45 @@ export default function AuthForm({
           </label>
         ))}
 
-        {error ? (
-          <p role="alert" className="border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
-            {error}
+        {secondaryLink ? (
+          <p className="-mt-1 text-right">
+            <Link
+              href={secondaryLink.href}
+              className="text-[12px] text-muted underline underline-offset-4 transition-colors hover:text-gold"
+            >
+              {secondaryLink.label}
+            </Link>
           </p>
         ) : null}
 
-        {state.notice ? (
+        {error ? (
+          <p role="alert" className="border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
+            {error}{" "}
+            {state.errorLink ? (
+              <Link href={state.errorLink.href} className="font-semibold underline underline-offset-4">
+                {state.errorLink.label}
+              </Link>
+            ) : null}
+          </p>
+        ) : null}
+
+        {notice ? (
           <p role="status" className="border border-line bg-sand px-4 py-3 text-[13px] text-ink-soft">
-            {state.notice}
+            {notice}
           </p>
         ) : null}
 
         <Submit label={submitLabel} />
       </form>
 
-      <p className="mt-6 text-center text-[13px] text-muted">
-        {footerText}{" "}
-        <Link href={footerLink.href} className="text-gold underline underline-offset-4">
-          {footerLink.label}
-        </Link>
-      </p>
+      {footerText && footerLink ? (
+        <p className="mt-6 text-center text-[13px] text-muted">
+          {footerText}{" "}
+          <Link href={footerLink.href} className="text-gold underline underline-offset-4">
+            {footerLink.label}
+          </Link>
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 export type AuthState = {
   error?: string;
   notice?: string;
+  /** Call-to-action rendered inside the error box, e.g. "Sign in instead". */
+  errorLink?: { label: string; href: string };
   /**
    * What the user typed, echoed back on failure.
    *
@@ -35,6 +37,28 @@ async function siteOrigin(): Promise<string> {
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? "https";
   return `${proto}://${host}`;
+}
+
+/** Where a recovery link has to land — the form that sets the new password. */
+const RESET_PATH = "/account/reset-password";
+
+/**
+ * Supabase's messages are written for whoever is reading the server logs, not
+ * for a shopper staring at a form. These are the ones that actually surface in
+ * normal use; anything unmapped falls through unchanged rather than being
+ * flattened into a useless "something went wrong".
+ */
+function friendlyError(message: string): string {
+  if (/rate limit/i.test(message)) {
+    return "We've sent too many emails in the last hour. Please try again a little later.";
+  }
+  if (/error sending/i.test(message)) {
+    return "We couldn't send that email just now — please try again in a few minutes.";
+  }
+  if (/is invalid$/i.test(message)) {
+    return "That email address doesn't look right. Please check it and try again.";
+  }
+  return message;
 }
 
 /** Only allow same-origin paths as a post-login redirect. */
@@ -92,7 +116,28 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     },
   });
 
-  if (error) return { error: error.message, values };
+  const alreadyRegistered = {
+    error: "An account with this email already exists.",
+    errorLink: { label: "Sign in instead", href: "/account/login" },
+    values,
+  };
+
+  // Supabase only says this outright when "Confirm email" is off; with it on you
+  // get the decoy below instead.
+  if (error) {
+    if (/already registered/i.test(error.message)) return alreadyRegistered;
+    return { error: friendlyError(error.message), values };
+  }
+
+  // A duplicate address does not raise an error — Supabase hands back a decoy
+  // user with an empty `identities` array so the form cannot be used to work out
+  // who has an account. Saying so plainly trades that protection for a much
+  // clearer signup, which is the call this storefront makes.
+  //
+  // Only *confirmed* duplicates look like this. Signing up again with an address
+  // that never confirmed still returns its identity, and that is a legitimate
+  // "resend me the link" — so it has to fall through to the notice below.
+  if (data.user && data.user.identities?.length === 0) return alreadyRegistered;
 
   // With "Confirm email" on (Supabase default) there is no session yet.
   if (!data.session) {
@@ -101,6 +146,74 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
 
   revalidatePath("/", "layout");
   redirect("/account");
+}
+
+/**
+ * Step 1 of a password reset: email the user a recovery link.
+ *
+ * `redirectTo` points at /auth/callback because that is where Supabase's *stock*
+ * recovery template lands — it verifies the token itself and bounces here with
+ * `?code=`. The `next` rides along so the callback drops people on the form
+ * instead of the account page. If the recovery template is ever customised to
+ * pass `{{ .TokenHash }}`, point it at /auth/confirm instead:
+ *
+ *   {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/account/reset-password
+ *
+ * Whichever is used, that URL must be listed under Authentication → URL
+ * Configuration → Redirect URLs or Supabase refuses to redirect to it.
+ */
+export async function requestPasswordReset(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim();
+  const values = { email };
+
+  if (!email) return { error: "Enter your email address.", values };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${await siteOrigin()}/auth/callback?next=${encodeURIComponent(RESET_PATH)}`,
+  });
+
+  // Rate limits and a dead SMTP setup are worth surfacing; a missing account is
+  // not — Supabase deliberately succeeds there so the form cannot be used to
+  // find out who has an account.
+  if (error) return { error: friendlyError(error.message), values };
+
+  return {
+    notice: `If ${email} has an account, a reset link is on its way. The link works once and expires in an hour.`,
+  };
+}
+
+/**
+ * Step 2: set the new password.
+ *
+ * Reaching the form at all means the recovery link already exchanged itself for
+ * a session, so `updateUser` has something to act on. Doubling back to getUser()
+ * here catches the case where that session expired while the form sat open —
+ * without it, updateUser fails with a much less helpful message.
+ */
+export async function updatePassword(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+
+  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (password !== confirm) return { error: "Both passwords must match." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "That reset link has expired. Request a fresh one and try again." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  // Supabase rejects reusing the current password when that policy is on.
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  redirect("/account?updated=password");
 }
 
 export async function signOut() {

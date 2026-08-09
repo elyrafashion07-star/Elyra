@@ -9,7 +9,12 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "My Account" };
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ updated?: string }>;
+}) {
+  const { updated } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,6 +34,15 @@ export default async function AccountPage() {
   return (
     <Container className="py-10 sm:py-14">
       <Breadcrumbs trail={[{ label: "My Account" }]} />
+
+      {updated === "password" ? (
+        <p
+          role="status"
+          className="mt-4 border border-line bg-sand px-4 py-3 text-[13px] text-ink-soft"
+        >
+          Your password has been updated. Use it the next time you sign in.
+        </p>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
         <div>

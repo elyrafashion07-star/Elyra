@@ -26,13 +26,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/account/login?error=${encodeURIComponent(errorCode)}`);
   }
 
-  const code = searchParams.get("code");
-  if (!code) {
-    return NextResponse.redirect(`${origin}/account/login?error=invalid_link`);
-  }
-
   const next = searchParams.get("next");
   const target = next?.startsWith("/") && !next.startsWith("//") ? next : "/account";
+
+  const code = searchParams.get("code");
+  if (!code) {
+    // No ?code= does not mean the link is dead. Supabase only issues a code when
+    // the flow it is completing was started with a PKCE challenge; otherwise it
+    // falls back to the implicit flow and hangs the tokens off the URL *fragment*
+    // (#access_token=…). Fragments are never sent to a server, so this handler
+    // cannot see them — /auth/finish runs in the browser and picks them up.
+    // Browsers carry the fragment across a redirect whose Location has none.
+    const url = new URL(`${origin}/auth/finish`);
+    url.searchParams.set("next", target);
+    return NextResponse.redirect(url);
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);

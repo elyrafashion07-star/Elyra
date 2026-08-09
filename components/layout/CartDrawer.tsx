@@ -61,7 +61,8 @@ export default function CartDrawer() {
             <ul className="divide-y divide-line">
               {lines.map((line) => (
                 <li key={`${line.handle}-${line.variant ?? ""}`} className="flex gap-3 p-4">
-                  <Link href={`/products/${line.handle}`} onClick={close} className="w-[75px] shrink-0">
+                  <Link href={`/products/${line.handle}`} onClick={close} className="
+                   shrink-0">
                     <FixedImage slot="cartThumb" alt={line.title} label="" className="rounded border border-line" />
                   </Link>
                   <div className="min-w-0 flex-1">

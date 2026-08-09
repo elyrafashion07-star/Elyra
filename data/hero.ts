@@ -7,7 +7,7 @@ export type HeroSlide = {
   desktopSrc?: string;
   mobileSrc?: string;
   /**
-   * Desktop-only. The 16:9 art is squeezed into a 2:1 box there (105px comes
+   * Desktop-only. The 16:9 art is squeezed into a ~2.9:1 box there (361px comes
    * off), so anchor the crop per slide and no face or product gets cut. Phone
    * and tablet show the art at its own 16:9 ratio, so nothing is cropped.
    */

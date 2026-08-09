@@ -9,7 +9,7 @@
  *   ─────────────────────────────────────────────────
  *   logo                 480 × 160          3:1  (full lockup)
  *   logoMark             640 × 387          ~5:3 (EF monogram, transparent PNG)
- *   heroDesktop         1672 × 836          2:1  (banner art is 16:9 — 105px trims off)
+ *   heroDesktop         1672 × 580         ~2.9:1 (banner art is 16:9 — 361px trims off)
  *   heroBanner          1672 × 941         16:9 (phone + tablet — the art's own ratio, never cropped)
  *   productCard         1000 × 1000         1:1
  *   productMain         1200 × 1500         4:5
@@ -40,7 +40,7 @@ export const IMAGE_SIZES = {
   logo: { width: 480, height: 160, sizes: "150px" },
   logoMark: { width: 640, height: 387, sizes: "110px" },
 
-  heroDesktop: { width: 1672, height: 836, sizes: "100vw" },
+  heroDesktop: { width: 1672, height: 580, sizes: "100vw" },
   heroBanner: { width: 1672, height: 941, sizes: "100vw" },
 
   // Matches ProductGrid's 2 / 3 / 4 columns (breaking at md and xl), capped by the

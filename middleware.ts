@@ -13,8 +13,15 @@ import { isSupabaseEnvSet, supabaseAnonKey, supabaseUrl } from "@/lib/supabase/e
 
 /** Signed-in users only. */
 const PROTECTED = ["/account"];
-/** Pointless once you are signed in — bounce to the account page. */
-const AUTH_PAGES = ["/account/login", "/account/register"];
+/**
+ * Pointless once you are signed in — bounce to the account page. These sit under
+ * /account, so without this list PROTECTED would lock signed-out people out of
+ * the very pages they need.
+ *
+ * /account/reset-password is deliberately *not* here: the recovery link signs
+ * you in before you get there, so it has to stay reachable while signed in.
+ */
+const AUTH_PAGES = ["/account/login", "/account/register", "/account/forgot-password"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
