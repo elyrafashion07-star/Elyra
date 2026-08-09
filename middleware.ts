@@ -11,8 +11,15 @@ import { isSupabaseEnvSet, supabaseAnonKey, supabaseUrl } from "@/lib/supabase/e
  * expire mid-browse.
  */
 
-/** Signed-in users only. */
-const PROTECTED = ["/account"];
+/**
+ * Signed-in users only.
+ *
+ * /admin needs more than a session, but the role lives in the database and not
+ * in the token, and this runs on every request — so the role check belongs in
+ * app/admin/layout.tsx, where one query per view is affordable. All this does is
+ * send signed-out visitors to the login form instead of letting them through.
+ */
+const PROTECTED = ["/account", "/admin"];
 /**
  * Pointless once you are signed in — bounce to the account page. These sit under
  * /account, so without this list PROTECTED would lock signed-out people out of

@@ -63,6 +63,12 @@ export type ProfileRow = {
   full_name: string | null;
   phone: string | null;
   email: string | null;
+  /**
+   * Gates /admin — see 0003_admin_role.sql. Users cannot write this column
+   * (the UPDATE grant deliberately excludes it), so only SQL or a service-role
+   * client can change it.
+   */
+  role: "customer" | "admin";
   created_at: string;
   updated_at: string;
 };
