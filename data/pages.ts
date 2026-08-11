@@ -29,7 +29,7 @@ export const infoPages: StaticPage[] = [
       {
         heading: "What We Promise",
         body: [
-          "BIS hallmarked 925 sterling silver on every piece. Free shipping across India. Cash on delivery wherever it is serviceable. Easy 7-day returns, no questions asked. And a WhatsApp line that an actual human answers.",
+          "BIS hallmarked 925 sterling silver on every piece. Free shipping across India. Secure online payments — UPI, cards, net banking and wallets. Easy 7-day returns, no questions asked. And a WhatsApp line that an actual human answers.",
         ],
       },
     ],
@@ -42,8 +42,8 @@ export const infoPages: StaticPage[] = [
       {
         heading: "Reach Us",
         body: [
-          "WhatsApp and phone: +91 81693 02654 — Monday to Saturday, 10:00 AM to 7:00 PM IST.",
-          "Email: support@elyrafashion.in — we answer every mail within one working day.",
+          "WhatsApp and phone: +91 92176 20575 — Monday to Saturday, 10:00 AM to 7:00 PM IST.",
+          "Email: elyrafashion07@gmail.com — we answer every mail within one working day.",
         ],
       },
       {
@@ -121,7 +121,7 @@ export const infoPages: StaticPage[] = [
         heading: "Delivery Timelines",
         body: [
           "Metros: 2–4 working days. Rest of India: 4–7 working days. Orders are dispatched within 24–48 hours of confirmation.",
-          "COD orders may need a quick verification call before dispatch.",
+          "Since every order is paid for online, dispatch begins as soon as the payment is confirmed.",
         ],
       },
     ],
@@ -151,7 +151,7 @@ export const policyPages: StaticPage[] = [
       {
         heading: "Your Rights",
         body: [
-          "Write to support@elyrafashion.in to access, correct or delete your data. We action requests within 30 days.",
+          "Write to elyrafashion07@gmail.com to access, correct or delete your data. We action requests within 30 days.",
         ],
       },
     ],
@@ -176,10 +176,10 @@ export const policyPages: StaticPage[] = [
         ],
       },
       {
-        heading: "Cash on Delivery",
+        heading: "Payment",
         body: [
-          "COD is available on most pin codes. A small COD handling fee may apply and is shown at checkout before you pay.",
-          "Repeated COD refusals may make future COD unavailable on that number.",
+          "All orders are prepaid. We accept UPI, cards, net banking and wallets through our payment partner — your card details never touch our servers.",
+          "Cash on delivery is not available.",
         ],
       },
     ],
@@ -200,7 +200,7 @@ export const policyPages: StaticPage[] = [
         heading: "How to Return",
         body: [
           "Message us on WhatsApp with your order number and a photo. We will arrange a reverse pickup wherever the courier services it.",
-          "Once the piece reaches us and passes inspection, refunds are issued to the original payment method within 5–7 working days. COD refunds go to a bank account you share with us.",
+          "Once the piece reaches us and passes inspection, refunds are issued to the original payment method within 5–7 working days.",
         ],
       },
       {

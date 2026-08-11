@@ -3,26 +3,29 @@ export const site = {
   /** Display lockup — "ELYRA" in ink, "Fashion" in rose-gold, as in the logo artwork. */
   wordmark: { head: "ELYRA", tail: "Fashion" },
   tagline: "925 Sterling Silver Jewellery",
-  phone: "+91 81693 02654",
-  phoneHref: "tel:+918169302654",
-  whatsapp: "918169302654",
-  email: "support@elyrafashion.in",
+  phone: "+91 92176 20575",
+  phoneHref: "tel:+919217620575",
+  whatsapp: "919217620575",
+  email: "elyrafashion07@gmail.com",
   about:
     "At Elyrafashion, we believe jewellery is more than adornment — it is an extension of who you are. Every piece is thoughtfully handcrafted in 925 sterling silver to celebrate individuality, elevate everyday style, and honour the moments that make life meaningful.",
-  instagram: "https://instagram.com/",
+  // Share links carry per-visitor tracking parameters (igsh, mibextid, rdid…)
+  // that mean nothing to anyone else — these are the plain canonical URLs.
+  instagram: "https://www.instagram.com/elyrafashion.in",
+  facebook: "https://www.facebook.com/profile.php?id=61592668559526",
   copyright: `© ${new Date().getFullYear()} ELYRAFashion. All Rights Reserved.`,
 };
 
 export const announcements = [
   "🚚 FREE SHIPPING AVAILABLE ON ALL ORDERS",
-  "💳 COD Available  |  5% Flat Off on First Order",
+  "💳 Secure Online Payments  |  5% Flat Off on First Order",
   "✨ 925 Sterling Silver  |  Certified  |  Easy 7-Day Returns",
 ];
 
 export const trustStrip = [
   { label: "925 Sterling Silver", icon: "silver" },
   { label: "Free Shipping", icon: "shipping" },
-  { label: "COD Available", icon: "cod" },
+  { label: "Secure Payments", icon: "payments" },
   { label: "Easy 7-Day Returns", icon: "returns" },
   { label: "Certified", icon: "certified" },
 ] as const;
@@ -52,7 +55,7 @@ export const whyUs = [
 
 export const footerBadges = [
   "100% Authentic Silver",
-  "COD Available",
+  "UPI · Cards · Net Banking",
   "Secure Payments",
   "Easy Returns",
   "Pan India Delivery",

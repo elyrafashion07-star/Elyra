@@ -84,9 +84,7 @@ export default function DeliveryCheck({ weight }: { weight?: string }) {
               {result.minDays ? ` in ${result.minDays} ${result.minDays === 1 ? "day" : "days"}` : ""}
               {result.etd ? ` · by ${result.etd}` : ""}
             </p>
-            <p className="mt-1 text-[12px] text-muted">
-              Free shipping · {result.codAvailable ? "COD available" : "Prepaid only on this pin code"}
-            </p>
+            <p className="mt-1 text-[12px] text-muted">Free shipping · Prepaid orders only</p>
           </div>
         ) : (
           <p className="mt-3 text-[13px] text-ink-soft">

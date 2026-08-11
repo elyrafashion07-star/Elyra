@@ -69,11 +69,14 @@ export default async function AccountPage({
           title="Profile"
           lines={[name ?? "Name not set", user.email ?? "", profile?.phone ?? "Phone not set"]}
         />
-        <Card
-          icon={<Package className="h-5 w-5 text-gold" />}
-          title="Orders"
-          lines={["No orders yet.", "Order history appears here once checkout is live."]}
-        />
+        <Link href="/account/orders" className="group block">
+          <Card
+            icon={<Package className="h-5 w-5 text-gold" />}
+            title="Orders"
+            lines={["Track your orders and see what you've bought."]}
+            hover
+          />
+        </Link>
         <Link href="/wishlist" className="group block">
           <Card
             icon={<Heart className="h-5 w-5 text-gold" />}

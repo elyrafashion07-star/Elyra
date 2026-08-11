@@ -197,7 +197,7 @@ export default function ProductDetail({ product }: { product: Product }) {
                 <div className="space-y-3">
                   <p>
                     Free shipping on every order across India. Metros arrive in 2–4 working days, the
-                    rest of India in 4–7. COD is available on most pin codes.
+                    rest of India in 4–7. Pay securely by UPI, card, net banking or wallet.
                   </p>
                   <p>
                     Returns accepted within 7 days of delivery on unworn pieces in original packaging.

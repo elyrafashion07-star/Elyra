@@ -123,12 +123,14 @@ export default function CartPage() {
             </dl>
             <p className="mt-2 text-[11px] text-muted">Taxes calculated at checkout.</p>
 
-            <button
-              type="button"
-              className="mt-6 w-full bg-ink py-3.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold"
+            {/* Signed-out shoppers get bounced to the login form by middleware
+                and land back here afterwards, so no check is needed up front. */}
+            <Link
+              href="/checkout"
+              className="mt-6 block w-full bg-ink py-3.5 text-center text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold"
             >
               Proceed to Checkout
-            </button>
+            </Link>
             <Link
               href="/collections/all"
               className="mt-3 block text-center text-[12px] text-muted underline underline-offset-4 hover:text-gold"

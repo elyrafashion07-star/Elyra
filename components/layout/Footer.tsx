@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
 import Container from "@/components/ui/Container";
-import { InstagramIcon, WhatsAppIcon } from "@/components/ui/SocialIcons";
+import { FacebookIcon, InstagramIcon, WhatsAppIcon } from "@/components/ui/SocialIcons";
 import { footerCategories, footerQuickLinks } from "@/data/navigation";
 import { footerBadges, site } from "@/data/site";
 
@@ -58,13 +58,26 @@ export default function Footer() {
           <div className="mt-5 flex gap-3">
             <a
               href={site.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
               aria-label="Instagram"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-cream/25 transition-colors hover:border-gold hover:text-gold"
             >
               <InstagramIcon />
             </a>
             <a
+              href={site.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-cream/25 transition-colors hover:border-gold hover:text-gold"
+            >
+              <FacebookIcon />
+            </a>
+            <a
               href={`https://wa.me/${site.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
               aria-label="WhatsApp"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-cream/25 transition-colors hover:border-gold hover:text-gold"
             >

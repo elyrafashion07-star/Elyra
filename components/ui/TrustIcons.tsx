@@ -42,8 +42,8 @@ export function ShippingIcon({ className = "" }: IconProps) {
   );
 }
 
-/** COD Available — a payment card with its magnetic stripe. */
-export function CodIcon({ className = "" }: IconProps) {
+/** Secure Payments — a payment card with its magnetic stripe. */
+export function PaymentsIcon({ className = "" }: IconProps) {
   return (
     <svg {...base} className={className}>
       <rect x="1.75" y="5.25" width="20.5" height="13.5" rx="2.5" />
@@ -77,7 +77,7 @@ export function CertifiedIcon({ className = "" }: IconProps) {
 export const trustIcons = {
   silver: SilverIcon,
   shipping: ShippingIcon,
-  cod: CodIcon,
+  payments: PaymentsIcon,
   returns: ReturnsIcon,
   certified: CertifiedIcon,
 };
