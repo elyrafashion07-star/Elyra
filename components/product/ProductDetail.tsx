@@ -24,7 +24,12 @@ export default function ProductDetail({ product }: { product: Product }) {
   const toggleWish = useWishlist((s) => s.toggle);
 
   const off = discountPercent(product.price, product.compareAt);
-  const slots = Array.from({ length: product.gallery }, (_, i) => i);
+  // Real uploads drive the gallery; `gallery` is only the old placeholder count,
+  // used until someone adds photos in the admin panel.
+  const images = product.images ?? [];
+  const slots = images.length
+    ? images.map((_, i) => i)
+    : Array.from({ length: product.gallery }, (_, i) => i);
 
   return (
     <>
@@ -45,7 +50,12 @@ export default function ProductDetail({ product }: { product: Product }) {
                 }`}
               >
                 {/* 200 × 250 */}
-                <FixedImage slot="productThumb" alt={`${product.title} ${i + 1}`} label="" />
+                <FixedImage
+                  slot="productThumb"
+                  src={images[i]}
+                  alt={`${product.title} ${i + 1}`}
+                  label=""
+                />
               </button>
             ))}
           </div>
@@ -54,6 +64,7 @@ export default function ProductDetail({ product }: { product: Product }) {
             {/* 1200 × 1500 */}
             <FixedImage
               slot="productMain"
+              src={images[active]}
               alt={product.title}
               label={`${product.title} — image ${active + 1}`}
               priority

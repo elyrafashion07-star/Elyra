@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Minus, Plus, RefreshCw, ShieldCheck, Trash2, Truck, X } from "lucide-react";
 import FixedImage from "@/components/ui/FixedImage";
-import { completeYourLook } from "@/data/products";
+import { useUpsellProducts } from "@/lib/hooks/products";
 import { formatPrice } from "@/lib/format";
 import { cartSubtotal, useCart } from "@/lib/store/cart";
 
 export default function CartDrawer() {
   const { lines, isOpen, close, setQty, remove, note, setNote, coupon, setCoupon, add } = useCart();
+  const { products: upsell } = useUpsellProducts();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -115,7 +116,7 @@ export default function CartDrawer() {
           <div className="border-t border-line px-4 py-5">
             <h3 className="mb-3 text-xs font-semibold tracking-[0.14em] uppercase">Complete Your Look</h3>
             <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-              {completeYourLook.map((p) => (
+              {upsell.map((p) => (
                 <div key={p.handle} className="w-[128px] shrink-0">
                   <FixedImage
                     slot="productCard"

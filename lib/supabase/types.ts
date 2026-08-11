@@ -31,6 +31,12 @@ export type ProductRow = {
   variant_options: string[] | null;
   badge: "NEW" | "BESTSELLER" | "LIMITED" | null;
   sold_out: boolean;
+  /**
+   * Public Storage URLs, in display order — the first is the card image.
+   * See 0005_product_images.sql.
+   */
+  images: string[];
+  /** Legacy placeholder count; prefer images.length. */
   gallery: number;
   sort_order: number;
   created_at: string;

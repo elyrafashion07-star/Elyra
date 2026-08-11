@@ -2,9 +2,11 @@ import Link from "next/link";
 import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
 import ProductSlider from "@/components/product/ProductSlider";
-import { trendingProducts } from "@/data/products";
+import { trendingProducts } from "@/lib/catalog";
 
-export default function TrendingProducts() {
+export default async function TrendingProducts() {
+  const products = await trendingProducts();
+
   return (
     <section className="py-14 sm:py-16">
       <Container>
@@ -13,7 +15,7 @@ export default function TrendingProducts() {
           subtitle="Elyrafashion brings you trend-setting sterling silver jewellery designed to enhance confidence, style and sophistication."
         />
         <div className="mt-9">
-          <ProductSlider products={trendingProducts} />
+          <ProductSlider products={products} />
         </div>
         <div className="mt-9 text-center">
           <Link

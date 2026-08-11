@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
 import { collections } from "@/data/collections";
-import { products } from "@/data/products";
+import { loadCatalog } from "@/lib/catalog";
 import { infoPages, policyPages } from "@/data/pages";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://elyrafashion.in";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const products = await loadCatalog();
+
   const routes = [
     "",
     "/collections",

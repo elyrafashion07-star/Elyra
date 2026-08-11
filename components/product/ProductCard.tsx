@@ -23,6 +23,9 @@ export default function ProductCard({ product, sizes }: { product: Product; size
       <Link href={`/products/${product.handle}`} aria-label={product.title}>
         <FixedImage
           slot="productCard"
+          // First uploaded image is the card image; no images yet falls back to
+          // the sized placeholder, which is what FixedImage does with no src.
+          src={product.images?.[0]}
           alt={product.title}
           label={product.title}
           sizes={sizes}

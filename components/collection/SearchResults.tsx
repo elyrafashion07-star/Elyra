@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import ProductGrid from "@/components/product/ProductGrid";
 import { popularSearches } from "@/data/site";
-import { searchProducts } from "@/data/products";
+import { useProductSearch } from "@/lib/hooks/products";
 
 export default function SearchResults() {
   const params = useSearchParams();
@@ -13,7 +13,8 @@ export default function SearchResults() {
   const q = params.get("q") ?? "";
   const [value, setValue] = useState(q);
 
-  const results = searchProducts(q);
+  // No debounce needed: q only changes on submit, not per keystroke.
+  const { products: results, loading } = useProductSearch(q, 0);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,7 +50,11 @@ export default function SearchResults() {
       </div>
 
       <p className="mt-8 text-[13px] text-muted">
-        {q ? `${results.length} result${results.length === 1 ? "" : "s"} for “${q}”` : "Type something to search."}
+        {!q
+          ? "Type something to search."
+          : loading
+            ? "Searching…"
+            : `${results.length} result${results.length === 1 ? "" : "s"} for “${q}”`}
       </p>
 
       <div className="mt-6">{q ? <ProductGrid products={results} /> : null}</div>

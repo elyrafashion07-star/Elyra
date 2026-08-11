@@ -6,10 +6,10 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import ProductDetail from "@/components/product/ProductDetail";
 import ProductSlider from "@/components/product/ProductSlider";
 import { getCollection } from "@/data/collections";
-import { getProduct, products, relatedProducts } from "@/data/products";
+import { getProduct, loadCatalog, relatedProducts } from "@/lib/catalog";
 
-export function generateStaticParams() {
-  return products.map((p) => ({ handle: p.handle }));
+export async function generateStaticParams() {
+  return (await loadCatalog()).map((p) => ({ handle: p.handle }));
 }
 
 export async function generateMetadata({
@@ -18,18 +18,18 @@ export async function generateMetadata({
   params: Promise<{ handle: string }>;
 }): Promise<Metadata> {
   const { handle } = await params;
-  const product = getProduct(handle);
+  const product = await getProduct(handle);
   if (!product) return { title: "Product not found" };
   return { title: product.title, description: product.description };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
-  const product = getProduct(handle);
+  const product = await getProduct(handle);
   if (!product) notFound();
 
   const category = getCollection(product.category);
-  const related = relatedProducts(product);
+  const related = await relatedProducts(product);
 
   // Product schema so search engines pick up price and rating.
   const jsonLd = {

@@ -13,7 +13,12 @@ export type Product = {
   variants?: { label: string; options: string[] };
   badge?: "NEW" | "BESTSELLER" | "LIMITED";
   soldOut?: boolean;
-  /** Number of gallery slots on the PDP. Images are placeholders for now. */
+  /**
+   * Public Storage URLs in display order; the first is the card image.
+   * Empty until someone uploads photos in the admin panel.
+   */
+  images?: string[];
+  /** Legacy placeholder count — used only when `images` is empty. */
   gallery: number;
 };
 

@@ -26,11 +26,14 @@ export default async function AdminPage() {
       </p>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card
-          icon={<Package className="h-5 w-5 text-gold" />}
-          title="Products"
-          body="Catalogue editing still runs through npm run db:seed."
-        />
+        <Link href="/admin/products" className="group block">
+          <Card
+            icon={<Package className="h-5 w-5 text-gold" />}
+            title="Products"
+            body="Add, edit and photograph the catalogue."
+            hover
+          />
+        </Link>
         <Card
           icon={<Users className="h-5 w-5 text-gold" />}
           title="Customers"
@@ -52,9 +55,22 @@ export default async function AdminPage() {
   );
 }
 
-function Card({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+function Card({
+  icon,
+  title,
+  body,
+  hover,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+  /** Set when the card is wrapped in a link, so the border picks up the hover. */
+  hover?: boolean;
+}) {
   return (
-    <div className="h-full border border-line bg-white p-6">
+    <div
+      className={`h-full border border-line bg-white p-6 ${hover ? "transition-colors group-hover:border-gold" : ""}`}
+    >
       <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.16em] uppercase text-ink">
         {icon} {title}
       </p>

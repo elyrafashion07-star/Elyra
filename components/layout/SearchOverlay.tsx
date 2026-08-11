@@ -6,15 +6,18 @@ import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
 import FixedImage from "@/components/ui/FixedImage";
 import { popularSearches } from "@/data/site";
-import { searchProducts, trendingProducts } from "@/data/products";
+import { useProductSearch, useTrendingProducts } from "@/lib/hooks/products";
 import { formatPrice } from "@/lib/format";
 
 export default function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const router = useRouter();
 
-  const results = query.trim() ? searchProducts(query).slice(0, 6) : [];
-  const suggestions = query.trim() ? results : trendingProducts.slice(0, 4);
+  const { products: found } = useProductSearch(query);
+  const { products: trending } = useTrendingProducts();
+
+  const results = query.trim() ? found.slice(0, 6) : [];
+  const suggestions = query.trim() ? results : trending.slice(0, 4);
 
   // Without this the page scrolls behind the overlay on touch devices.
   useEffect(() => {

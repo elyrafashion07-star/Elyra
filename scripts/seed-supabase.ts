@@ -6,6 +6,11 @@
  *
  * Idempotent: every table is upserted on its primary key, so re-running syncs
  * changes rather than duplicating. Reads credentials from .env.local.
+ *
+ * Products are NOT seeded from here any more. They live in Supabase and are
+ * edited in the admin panel, so there is no file to copy them from — and
+ * re-running this used to overwrite whatever the admin panel had changed.
+ * data/products.ts was deleted for the same reason.
  */
 import "dotenv/config";
 import { config as loadEnv } from "dotenv";
@@ -13,7 +18,6 @@ import { createClient } from "@supabase/supabase-js";
 
 import { noRealtime } from "../lib/supabase/no-realtime";
 import { collections } from "../data/collections";
-import { products } from "../data/products";
 import { heroSlides } from "../data/hero";
 import { infoPages, policyPages } from "../data/pages";
 import type { Database } from "../lib/supabase/types";
@@ -32,40 +36,6 @@ const collectionRows = collections.map((c, i) => ({
   image: c.image ?? null,
   sort_order: i,
 }));
-
-const knownCollection = new Set(collectionRows.map((c) => c.handle));
-
-const productRows = products.map((p, i) => ({
-  handle: p.handle,
-  title: p.title,
-  price: p.price,
-  compare_at: p.compareAt ?? null,
-  rating: p.rating,
-  reviews: p.reviews,
-  // category is a FK — only send it if that collection actually exists.
-  category: knownCollection.has(p.category) ? p.category : null,
-  description: p.description,
-  material: p.material,
-  weight: p.weight,
-  variant_label: p.variants?.label ?? null,
-  variant_options: p.variants?.options ?? null,
-  badge: p.badge ?? null,
-  sold_out: p.soldOut ?? false,
-  gallery: p.gallery,
-  sort_order: i,
-}));
-
-// Join rows, skipping any collection handle that has no row of its own.
-const missingLinks: string[] = [];
-const productCollectionRows = products.flatMap((p) =>
-  p.collections.flatMap((handle) => {
-    if (!knownCollection.has(handle)) {
-      missingLinks.push(`${p.handle} → ${handle}`);
-      return [];
-    }
-    return [{ product_handle: p.handle, collection_handle: handle }];
-  }),
-);
 
 const heroRows = heroSlides.map((s, i) => ({
   position: i,
@@ -98,21 +68,9 @@ const pageRows = [
 console.log("Rows built from /data:");
 console.table({
   collections: { rows: collectionRows.length },
-  products: { rows: productRows.length },
-  product_collections: { rows: productCollectionRows.length },
   hero_slides: { rows: heroRows.length },
   info_pages: { rows: pageRows.length },
 });
-
-const orphanCategories = productRows.filter((p) => p.category === null).map((p) => p.handle);
-if (orphanCategories.length) {
-  console.warn(`⚠ ${orphanCategories.length} product(s) have a category with no collection row:`);
-  console.warn("  " + orphanCategories.join(", "));
-}
-if (missingLinks.length) {
-  console.warn(`⚠ ${missingLinks.length} product→collection link(s) point at unknown collections:`);
-  console.warn("  " + missingLinks.join(", "));
-}
 
 if (dryRun) {
   console.log("\n--dry-run: nothing was written.");
@@ -157,10 +115,7 @@ async function upsert(table: string, rows: object[], onConflict: string) {
 async function main() {
   console.log(`\nWriting to ${url}\n`);
 
-  // Order matters: products reference collections, links reference both.
   await upsert("collections", collectionRows, "handle");
-  await upsert("products", productRows, "handle");
-  await upsert("product_collections", productCollectionRows, "product_handle,collection_handle");
   await upsert("hero_slides", heroRows, "position");
   await upsert("info_pages", pageRows, "slug");
 

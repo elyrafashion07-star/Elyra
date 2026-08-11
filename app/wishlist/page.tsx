@@ -5,9 +5,8 @@ import Link from "next/link";
 import Container from "@/components/ui/Container";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import ProductGrid from "@/components/product/ProductGrid";
-import { productMap } from "@/data/products";
+import { useProductsByHandles } from "@/lib/hooks/products";
 import { useWishlist } from "@/lib/store/wishlist";
-import type { Product } from "@/lib/types";
 
 export default function WishlistPage() {
   const handles = useWishlist((s) => s.handles);
@@ -15,9 +14,8 @@ export default function WishlistPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const items = mounted
-    ? handles.map((h) => productMap.get(h)).filter((p): p is Product => Boolean(p))
-    : [];
+  // Handles come from localStorage, so they are only real after hydration.
+  const { products: items, loading } = useProductsByHandles(mounted ? handles : []);
 
   return (
     <Container className="py-10">
@@ -39,7 +37,7 @@ export default function WishlistPage() {
         {items.length === 0 ? (
           <div className="flex flex-col items-center gap-5 py-24 text-center">
             <p className="text-sm text-muted">
-              {mounted ? "Nothing saved yet — tap the heart on any product." : "Loading…"}
+              {!mounted || loading ? "Loading…" : "Nothing saved yet — tap the heart on any product."}
             </p>
             <Link
               href="/collections/all"

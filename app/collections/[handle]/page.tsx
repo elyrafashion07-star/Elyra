@@ -4,7 +4,7 @@ import Container from "@/components/ui/Container";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import CollectionView from "@/components/collection/CollectionView";
 import { collections, getCollection } from "@/data/collections";
-import { productsInCollection } from "@/data/products";
+import { productsInCollection } from "@/lib/catalog";
 
 export function generateStaticParams() {
   return collections.map((c) => ({ handle: c.handle }));
@@ -26,7 +26,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ han
   const collection = getCollection(handle);
   if (!collection) notFound();
 
-  const items = productsInCollection(handle);
+  const items = await productsInCollection(handle);
 
   // No banner here — banners live on the homepage only.
   return (

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Container from "@/components/ui/Container";
 import FixedImage from "@/components/ui/FixedImage";
@@ -17,11 +18,20 @@ const tiles: Tile[] = homeCategories.flatMap((handle) => {
 });
 
 export default function ShopByCategory() {
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
-    align: "center",
-    containScroll: false,
-  });
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: true,
+      align: "center",
+      containScroll: false,
+    },
+    [
+      // Faster than the hero: these are small tiles, and the centred one scales
+      // up as it lands, so a long pause reads as the carousel having stalled.
+      // stopOnMouseEnter matters here because every tile is a link — sliding a
+      // card out from under someone's cursor sends them to the wrong collection.
+      Autoplay({ delay: 3500, stopOnInteraction: false, stopOnMouseEnter: true }),
+    ],
+  );
   const [selected, setSelected] = useState(0);
 
   useEffect(() => {
