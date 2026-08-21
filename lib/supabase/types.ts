@@ -140,6 +140,17 @@ export type OrderItemRow = {
   line_total_paise: number;
 };
 
+/** One courier checkpoint — see supabase/migrations/0006_tracking_events.sql. */
+export type OrderTrackingEventRow = {
+  id: string;
+  order_id: string;
+  status: string;
+  location: string | null;
+  note: string | null;
+  happened_at: string;
+  created_at: string;
+};
+
 export type InfoPageRow = {
   slug: string;
   title: string;
@@ -171,6 +182,10 @@ export type Database = {
         Omit<OrderRow, "id" | "order_no" | "created_at" | "updated_at">
       >;
       order_items: Table<OrderItemRow, Omit<OrderItemRow, "id">>;
+      order_tracking_events: Table<
+        OrderTrackingEventRow,
+        Omit<OrderTrackingEventRow, "id" | "created_at">
+      >;
     };
     Views: Record<never, never>;
     Functions: {

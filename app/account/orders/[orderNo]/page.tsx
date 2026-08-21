@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { CheckCircle2, Clock, Package, XCircle } from "lucide-react";
 import Container from "@/components/ui/Container";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
+import TrackingTimeline from "@/components/orders/TrackingTimeline";
+import { getTrackingEvents } from "@/lib/orders/tracking";
 import { formatPaise } from "@/lib/format";
 import { createClient, getUser } from "@/lib/supabase/server";
 import type { OrderStatus } from "@/lib/supabase/types";
@@ -61,10 +63,10 @@ export default async function OrderPage({ params }: { params: Promise<{ orderNo:
 
   if (!order) notFound();
 
-  const { data: items } = await supabase
-    .from("order_items")
-    .select("*")
-    .eq("order_id", order.id);
+  const [{ data: items }, events] = await Promise.all([
+    supabase.from("order_items").select("*").eq("order_id", order.id),
+    getTrackingEvents(order.id),
+  ]);
 
   const status = STATUS[order.status];
 
@@ -137,11 +139,13 @@ export default async function OrderPage({ params }: { params: Promise<{ orderNo:
             {order.ship_phone}
           </address>
 
-          {order.awb ? (
-            <p className="mt-4 border-t border-line pt-4">
-              Tracking: <span className="text-ink">{order.awb}</span>
-              {order.courier ? ` · ${order.courier}` : ""}
-            </p>
+          {order.awb || events.length ? (
+            <div className="mt-4 border-t border-line pt-4">
+              <h2 className="text-[11px] font-semibold tracking-[0.16em] uppercase text-ink">
+                Tracking
+              </h2>
+              <TrackingTimeline events={events} awb={order.awb} courier={order.courier} />
+            </div>
           ) : null}
         </aside>
       </div>

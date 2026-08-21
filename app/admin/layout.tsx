@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import AdminNav from "@/components/admin/AdminNav";
 import { getProfile } from "@/lib/supabase/server";
 
 /**
@@ -20,5 +21,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // does not advertise that it exists to someone with no business there.
   if (profile.role !== "admin") notFound();
 
-  return <>{children}</>;
+  return (
+    <>
+      <AdminNav />
+      {children}
+    </>
+  );
 }

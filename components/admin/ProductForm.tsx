@@ -57,7 +57,7 @@ export default function ProductForm({
       </Section>
 
       <Section title="Images" hint={`Up to ${IMAGE_SLOTS}. The first is used on product cards.`}>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {Array.from({ length: IMAGE_SLOTS }, (_, slot) => (
             <ImageSlot key={slot} slot={slot} existing={product?.images?.[slot]} />
           ))}
