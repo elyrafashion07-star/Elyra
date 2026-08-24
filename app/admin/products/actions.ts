@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ALLOWED_IMAGE_TYPES, IMAGE_SLOTS, MAX_IMAGE_BYTES } from "@/lib/productImages";
+import { HANDLE_PATTERN, slugify } from "@/lib/slug";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/supabase/server";
 
@@ -14,7 +15,6 @@ export type ProductFormState = {
 };
 
 const BUCKET = "product-images";
-const HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
  * Every action here re-checks the role server-side.
@@ -68,6 +68,29 @@ function number(form: FormData, key: string): number | null {
 }
 
 /**
+ * Returns `base`, or the first `base-2`, `base-3`… that no other product holds.
+ *
+ * Handles are generated from titles, so two products called "Silver Ring" would
+ * otherwise land on the same row and the second save would quietly overwrite the
+ * first — upsert has no way to tell a rename from a collision. `original` is the
+ * handle being edited, which does not count as taken against itself.
+ */
+async function freeHandle(base: string, original: string): Promise<string> {
+  const db = getSupabaseAdmin();
+  const { data } = await db.from("products").select("handle").like("handle", `${base}%`);
+
+  const taken = new Set(
+    (data ?? []).map((row) => row.handle).filter((h) => h !== original),
+  );
+  if (!taken.has(base)) return base;
+
+  for (let n = 2; ; n += 1) {
+    const candidate = `${base}-${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
+
+/**
  * Creates or updates a product, uploading any newly picked images along the way.
  *
  * Images and fields are saved in the same submit on purpose: uploading first and
@@ -81,14 +104,18 @@ export async function saveProduct(
   if (!(await requireAdmin())) return { error: "You do not have permission to do that." };
 
   const original = String(form.get("original_handle") ?? "").trim();
-  const handle = String(form.get("handle") ?? "")
-    .trim()
-    .toLowerCase();
   const title = String(form.get("title") ?? "").trim();
   const price = number(form, "price");
 
+  // Left blank, the URL is written from the title — the form does the same as
+  // you type, so this covers a submit that never reached the handle field.
+  const typed = String(form.get("handle") ?? "")
+    .trim()
+    .toLowerCase();
+  const base = typed || slugify(title);
+
   const values: Record<string, string> = {
-    handle,
+    handle: base,
     title,
     price: String(form.get("price") ?? ""),
     compare_at: String(form.get("compare_at") ?? ""),
@@ -102,19 +129,25 @@ export async function saveProduct(
     sort_order: String(form.get("sort_order") ?? ""),
   };
 
-  if (!HANDLE.test(handle)) {
+  if (!title) return { error: "Enter a title.", values };
+  if (!HANDLE_PATTERN.test(base)) {
     return {
-      error: "Handle must be lowercase words joined by hyphens, e.g. twin-strings-silver-ring.",
+      error: typed
+        ? "Handle must be lowercase words joined by hyphens, e.g. twin-strings-silver-ring."
+        : "Could not build a URL from that title — type a handle like twin-strings-silver-ring.",
       values,
     };
   }
-  if (!title) return { error: "Enter a title.", values };
   if (price === null || price < 0) return { error: "Enter a valid price in rupees.", values };
 
   const compareAt = number(form, "compare_at");
   if (compareAt !== null && compareAt < price) {
     return { error: "Compare-at price must be higher than the price, or left blank.", values };
   }
+
+  // Settled last, so images upload under the handle the row is actually saved
+  // with and nothing is left in a folder no product points at.
+  const handle = await freeHandle(base, original);
 
   // Existing URLs ride along in hidden inputs; a picked file replaces the slot.
   const images: string[] = [];

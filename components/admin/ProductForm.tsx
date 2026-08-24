@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Loader2, Upload, X } from "lucide-react";
 import { saveProduct, type ProductFormState } from "@/app/admin/products/actions";
 import { IMAGE_ACCEPT, IMAGE_SLOTS } from "@/lib/productImages";
+import { slugify } from "@/lib/slug";
 import type { Collection, Product } from "@/lib/types";
 
 const BADGES = ["", "NEW", "BESTSELLER", "LIMITED"] as const;
@@ -27,6 +28,13 @@ export default function ProductForm({
   const tagged = new Set(product?.collections ?? []);
   const categories = collections.filter((c) => c.group === "category");
 
+  // The handle is written from the title, so it is only ever typed by hand when
+  // someone wants a URL that differs from the title. Editing it stops the
+  // mirroring — an existing product starts out that way, since its URL is
+  // already published and must not shift under a title tweak.
+  const [handle, setHandle] = useState(value("handle", product?.handle));
+  const [handleEdited, setHandleEdited] = useState(Boolean(product));
+
   return (
     <form action={formAction} className="mt-8 space-y-8">
       <input type="hidden" name="original_handle" value={product?.handle ?? ""} />
@@ -39,12 +47,28 @@ export default function ProductForm({
 
       <Section title="Basics">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field name="title" label="Title" defaultValue={value("title", product?.title)} />
+          <Field
+            name="title"
+            label="Title"
+            defaultValue={value("title", product?.title)}
+            onChange={(e) => {
+              if (!handleEdited) setHandle(slugify(e.currentTarget.value));
+            }}
+          />
           <Field
             name="handle"
             label="Handle (URL)"
-            defaultValue={value("handle", product?.handle)}
-            hint="Lowercase words joined by hyphens. Changing it changes the product URL."
+            value={handle}
+            onChange={(e) => {
+              setHandleEdited(true);
+              setHandle(e.currentTarget.value);
+            }}
+            required={false}
+            hint={
+              handleEdited
+                ? "Lowercase words joined by hyphens. Changing it changes the product URL."
+                : "Filled in from the title. Type here to set your own."
+            }
           />
         </div>
 
