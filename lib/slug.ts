@@ -1,6 +1,3 @@
-/** Shape a product handle has to match to be a valid URL segment. */
-export const HANDLE_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
 /**
  * Turns a title into a URL handle: "Twin Strings — Silver Ring (925)" becomes
  * "twin-strings-silver-ring-925".

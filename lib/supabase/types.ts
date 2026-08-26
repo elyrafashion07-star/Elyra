@@ -171,7 +171,14 @@ export type Database = {
   public: {
     Tables: {
       collections: Table<CollectionRow, Omit<CollectionRow, "created_at" | "updated_at">>;
-      products: Table<ProductRow, Omit<ProductRow, "created_at" | "updated_at">>;
+      // Only handle, title and price have to be given: every other column is
+      // either nullable or carries a default — see 0001_init.sql — which is what
+      // lets the admin form ask for four fields and no more.
+      products: Table<
+        ProductRow,
+        Pick<ProductRow, "handle" | "title" | "price"> &
+          Partial<Omit<ProductRow, "handle" | "title" | "price" | "created_at" | "updated_at">>
+      >;
       product_collections: Table<ProductCollectionRow>;
       hero_slides: Table<HeroSlideRow, Omit<HeroSlideRow, "updated_at">>;
       info_pages: Table<InfoPageRow, Omit<InfoPageRow, "updated_at">>;

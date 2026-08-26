@@ -3,13 +3,20 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { ALLOWED_IMAGE_TYPES, IMAGE_SLOTS, MAX_IMAGE_BYTES } from "@/lib/productImages";
-import { HANDLE_PATTERN, slugify } from "@/lib/slug";
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/lib/productImages";
+import { PRODUCT_WEIGHT } from "@/lib/parcel";
+import { slugify } from "@/lib/slug";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/supabase/server";
 
+/** Which input a message belongs under. */
+export type ProductField = "title" | "description" | "price" | "image";
+
 export type ProductFormState = {
+  /** Shown once at the top of the form. */
   error?: string;
+  /** Shown under the input it names, so the wrong field is obvious. */
+  fieldErrors?: Partial<Record<ProductField, string>>;
   /** Echoed back so a rejected submit does not empty the form. */
   values?: Record<string, string>;
 };
@@ -60,28 +67,18 @@ async function uploadImage(handle: string, file: File): Promise<string | null> {
   return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
-function number(form: FormData, key: string): number | null {
-  const raw = String(form.get(key) ?? "").trim();
-  if (!raw) return null;
-  const value = Number(raw);
-  return Number.isFinite(value) ? value : null;
-}
-
 /**
- * Returns `base`, or the first `base-2`, `base-3`… that no other product holds.
+ * Returns `base`, or the first `base-2`, `base-3`… no product holds yet.
  *
- * Handles are generated from titles, so two products called "Silver Ring" would
- * otherwise land on the same row and the second save would quietly overwrite the
- * first — upsert has no way to tell a rename from a collision. `original` is the
- * handle being edited, which does not count as taken against itself.
+ * Handles are generated from titles, so two products both called "Silver Ring"
+ * would otherwise land on the same row and the second would quietly overwrite
+ * the first.
  */
-async function freeHandle(base: string, original: string): Promise<string> {
+async function freeHandle(base: string): Promise<string> {
   const db = getSupabaseAdmin();
   const { data } = await db.from("products").select("handle").like("handle", `${base}%`);
 
-  const taken = new Set(
-    (data ?? []).map((row) => row.handle).filter((h) => h !== original),
-  );
+  const taken = new Set((data ?? []).map((row) => row.handle));
   if (!taken.has(base)) return base;
 
   for (let n = 2; ; n += 1) {
@@ -91,11 +88,16 @@ async function freeHandle(base: string, original: string): Promise<string> {
 }
 
 /**
- * Creates or updates a product, uploading any newly picked images along the way.
+ * Creates or updates a product from the four things the form asks for: name,
+ * description, price and one photo.
  *
- * Images and fields are saved in the same submit on purpose: uploading first and
- * saving second would leave orphaned files in the bucket whenever validation
- * rejected the form.
+ * Everything else is filled in here — the URL from the name, the weight from
+ * lib/parcel.ts, and the rest from the column defaults — so there is nothing to
+ * get wrong while adding a product.
+ *
+ * The photo is uploaded only once the rest of the form is known good: uploading
+ * first would leave an orphaned file in the bucket every time a field was
+ * rejected.
  */
 export async function saveProduct(
   _prev: ProductFormState,
@@ -103,121 +105,92 @@ export async function saveProduct(
 ): Promise<ProductFormState> {
   if (!(await requireAdmin())) return { error: "You do not have permission to do that." };
 
+  /** Set when editing; the handle of the row being changed. */
   const original = String(form.get("original_handle") ?? "").trim();
+
   const title = String(form.get("title") ?? "").trim();
-  const price = number(form, "price");
+  const description = String(form.get("description") ?? "").trim();
+  const priceRaw = String(form.get("price") ?? "").trim();
 
-  // Left blank, the URL is written from the title — the form does the same as
-  // you type, so this covers a submit that never reached the handle field.
-  const typed = String(form.get("handle") ?? "")
-    .trim()
-    .toLowerCase();
-  const base = typed || slugify(title);
+  const values = { title, description, price: priceRaw };
 
-  const values: Record<string, string> = {
-    handle: base,
-    title,
-    price: String(form.get("price") ?? ""),
-    compare_at: String(form.get("compare_at") ?? ""),
-    category: String(form.get("category") ?? ""),
-    description: String(form.get("description") ?? ""),
-    material: String(form.get("material") ?? ""),
-    weight: String(form.get("weight") ?? ""),
-    variant_label: String(form.get("variant_label") ?? ""),
-    variant_options: String(form.get("variant_options") ?? ""),
-    badge: String(form.get("badge") ?? ""),
-    sort_order: String(form.get("sort_order") ?? ""),
-  };
+  // Every field is checked before anything is returned, so one submit reports
+  // all of its problems instead of one per attempt.
+  const fieldErrors: Partial<Record<ProductField, string>> = {};
 
-  if (!title) return { error: "Enter a title.", values };
-  if (!HANDLE_PATTERN.test(base)) {
-    return {
-      error: typed
-        ? "Handle must be lowercase words joined by hyphens, e.g. twin-strings-silver-ring."
-        : "Could not build a URL from that title — type a handle like twin-strings-silver-ring.",
-      values,
-    };
-  }
-  if (price === null || price < 0) return { error: "Enter a valid price in rupees.", values };
-
-  const compareAt = number(form, "compare_at");
-  if (compareAt !== null && compareAt < price) {
-    return { error: "Compare-at price must be higher than the price, or left blank.", values };
+  if (!title) fieldErrors.title = "Enter the product name.";
+  else if (!original && !slugify(title)) {
+    fieldErrors.title =
+      "The name needs at least one English letter or number — the web address is built from it.";
   }
 
-  // Settled last, so images upload under the handle the row is actually saved
-  // with and nothing is left in a folder no product points at.
-  const handle = await freeHandle(base, original);
+  if (!description) {
+    fieldErrors.description = "Write a short description — this is what the product page shows.";
+  }
 
-  // Existing URLs ride along in hidden inputs; a picked file replaces the slot.
-  const images: string[] = [];
-  for (let slot = 0; slot < IMAGE_SLOTS; slot += 1) {
-    const file = form.get(`image_${slot}`);
-    const existing = String(form.get(`image_url_${slot}`) ?? "").trim();
+  const price = Number(priceRaw);
+  if (!priceRaw) fieldErrors.price = "Enter the price in rupees.";
+  else if (!Number.isFinite(price)) {
+    fieldErrors.price = `“${priceRaw}” is not a number. Enter rupees only, like 2499.`;
+  } else if (price <= 0) fieldErrors.price = "Price must be more than ₹0.";
 
-    if (file instanceof File && file.size > 0) {
-      const url = await uploadImage(handle, file);
-      if (!url) {
-        return {
-          error: `Image ${slot + 1} was rejected — use a JPG, PNG, WebP or AVIF under 5 MB.`,
-          values,
-        };
-      }
-      images.push(url);
-    } else if (existing) {
-      images.push(existing);
+  // A picked file replaces the photo; the existing URL rides along in a hidden
+  // input so a save that touches no file keeps it.
+  const file = form.get("image_0");
+  const picked = file instanceof File && file.size > 0 ? file : null;
+  const existing = String(form.get("image_url_0") ?? "").trim();
+
+  if (picked && !ALLOWED_IMAGE_TYPES.includes(picked.type)) {
+    fieldErrors.image = "That file is not a usable image — pick a JPG, PNG, WebP or AVIF.";
+  } else if (picked && picked.size > MAX_IMAGE_BYTES) {
+    const mb = (picked.size / 1024 / 1024).toFixed(1);
+    fieldErrors.image = `That photo is ${mb} MB. The limit is 5 MB — use a smaller one.`;
+  } else if (!picked && !existing) {
+    fieldErrors.image = "Add one product photo.";
+  }
+
+  if (Object.keys(fieldErrors).length) {
+    return { error: "Could not save. Please fix the fields marked below.", fieldErrors, values };
+  }
+
+  const handle = original || (await freeHandle(slugify(title)));
+
+  let image = existing;
+  if (picked) {
+    const uploaded = await uploadImage(handle, picked);
+    if (!uploaded) {
+      return {
+        error: "Could not save.",
+        fieldErrors: { image: "The photo failed to upload. Please try again." },
+        values,
+      };
     }
+    image = uploaded;
   }
-
-  const variantOptions = values.variant_options
-    .split(",")
-    .map((o) => o.trim())
-    .filter(Boolean);
 
   const db = getSupabaseAdmin();
 
-  const { error } = await db.from("products").upsert(
-    {
-      handle,
-      title,
-      price,
-      compare_at: compareAt,
-      rating: number(form, "rating") ?? 0,
-      reviews: number(form, "reviews") ?? 0,
-      category: values.category || null,
-      description: values.description,
-      material: values.material || null,
-      weight: values.weight || null,
-      variant_label: variantOptions.length ? values.variant_label || null : null,
-      variant_options: variantOptions.length ? variantOptions : null,
-      badge: (values.badge || null) as "NEW" | "BESTSELLER" | "LIMITED" | null,
-      sold_out: form.get("sold_out") === "on",
-      images,
-      // Kept in step with the real images so nothing renders empty slots.
-      gallery: Math.max(images.length, 1),
-      sort_order: number(form, "sort_order") ?? 0,
-    },
-    { onConflict: "handle" },
-  );
+  const fields = {
+    title,
+    description,
+    price,
+    images: [image],
+    // Kept in step with the real images so nothing renders empty slots.
+    gallery: 1,
+  };
+
+  // An edit is an update, not an upsert. The form no longer carries category,
+  // material, badge or variants, and an upsert would blank every column it does
+  // not send — wiping details this form cannot even show. For the same reason
+  // the handle is left alone on an edit: the URL is already published, and it
+  // should not move because someone fixed a typo in the name.
+  const { error } = original
+    ? await db.from("products").update(fields).eq("handle", original)
+    : await db.from("products").insert({ handle, weight: PRODUCT_WEIGHT, ...fields });
 
   if (error) {
     console.error("[admin] product save failed:", error.message);
     return { error: `Could not save: ${error.message}`, values };
-  }
-
-  // Collection tags are a full replace — unticking a box has to remove the row.
-  const tags = form.getAll("collections").map(String).filter(Boolean);
-  await db.from("product_collections").delete().eq("product_handle", handle);
-  if (tags.length) {
-    await db
-      .from("product_collections")
-      .insert(tags.map((collection_handle) => ({ product_handle: handle, collection_handle })));
-  }
-
-  // Renaming the handle leaves the old row behind, so clear it out.
-  if (original && original !== handle) {
-    await db.from("products").delete().eq("handle", original);
-    revalidatePath(`/products/${original}`);
   }
 
   revalidateStorefront(handle);

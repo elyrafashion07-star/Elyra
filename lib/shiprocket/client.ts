@@ -8,6 +8,7 @@
  * Tokens are valid for 10 days; we cache in memory and re-authenticate on 401.
  */
 import "server-only";
+import { PARCEL } from "@/lib/parcel";
 
 const BASE = "https://apiv2.shiprocket.in/v1/external";
 
@@ -242,7 +243,7 @@ export type ShiprocketOrderInput = {
  * once that exists, and store the returned ids against the order.
  */
 export async function createOrder(input: ShiprocketOrderInput) {
-  const p = input.parcel ?? { lengthCm: 12, breadthCm: 10, heightCm: 4, weightKg: 0.5 };
+  const p = input.parcel ?? PARCEL;
 
   return request<{ order_id: number; shipment_id: number; status: string }>(`/orders/create/adhoc`, {
     method: "POST",

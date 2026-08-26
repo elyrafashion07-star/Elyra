@@ -5,7 +5,6 @@ import { Trash2 } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductForm from "@/components/admin/ProductForm";
 import { deleteProduct } from "@/app/admin/products/actions";
-import { collections } from "@/data/collections";
 import { getProduct } from "@/lib/catalog";
 
 export const metadata: Metadata = {
@@ -52,7 +51,7 @@ export default async function EditProductPage({
         </form>
       </div>
 
-      <ProductForm product={product} collections={collections} />
+      <ProductForm product={product} />
     </Container>
   );
 }

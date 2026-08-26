@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Heart, Minus, Plus, RefreshCw, ShieldCheck, Truck } from "lucide-react";
 import DeliveryCheck from "@/components/product/DeliveryCheck";
 import FixedImage from "@/components/ui/FixedImage";
@@ -191,16 +191,23 @@ export default function ProductDetail({ product }: { product: Product }) {
             <div className="py-5 text-[14px] leading-relaxed text-ink-soft">
               {tab === "Description" ? <p>{product.description}</p> : null}
 
+              {/* Material and category are optional — the admin form does not ask
+                  for them — so a row is skipped rather than left blank. */}
               {tab === "Details" ? (
                 <dl className="grid grid-cols-[92px_1fr] gap-y-2 text-[13px] sm:grid-cols-[130px_1fr]">
-                  <dt className="text-muted">Material</dt>
-                  <dd>{product.material}</dd>
-                  <dt className="text-muted">Weight</dt>
-                  <dd>{product.weight}</dd>
-                  <dt className="text-muted">Category</dt>
-                  <dd className="capitalize">{product.category.replace(/-/g, " ")}</dd>
-                  <dt className="text-muted">SKU</dt>
-                  <dd className="uppercase">{product.handle.slice(0, 12)}</dd>
+                  {[
+                    { label: "Material", detail: product.material },
+                    { label: "Weight", detail: product.weight },
+                    { label: "Category", detail: product.category.replace(/-/g, " "), className: "capitalize" },
+                    { label: "SKU", detail: product.handle.slice(0, 12), className: "uppercase" },
+                  ]
+                    .filter((row) => row.detail)
+                    .map((row) => (
+                      <Fragment key={row.label}>
+                        <dt className="text-muted">{row.label}</dt>
+                        <dd className={row.className}>{row.detail}</dd>
+                      </Fragment>
+                    ))}
                 </dl>
               ) : null}
 

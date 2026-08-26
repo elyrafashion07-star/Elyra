@@ -6,15 +6,6 @@
  * them.
  */
 
-/**
- * How many image slots a product has. The first is the card image.
- *
- * Lowering this truncates: the admin form only renders this many slots, and
- * saveProduct only reads this many, so anything beyond is dropped on the next
- * save rather than lingering invisibly.
- */
-export const IMAGE_SLOTS = 3;
-
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
