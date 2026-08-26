@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductForm from "@/components/admin/ProductForm";
+import { collections } from "@/data/collections";
 import { deleteProduct } from "@/app/admin/products/actions";
 import { getProduct } from "@/lib/catalog";
 
@@ -51,7 +52,7 @@ export default async function EditProductPage({
         </form>
       </div>
 
-      <ProductForm product={product} />
+      <ProductForm product={product} collections={collections} />
     </Container>
   );
 }

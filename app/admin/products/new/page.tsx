@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 import ProductForm from "@/components/admin/ProductForm";
+import { collections } from "@/data/collections";
 
 export const metadata: Metadata = {
   title: "New Product · Admin",
@@ -16,7 +17,7 @@ export default function NewProductPage() {
       </Link>
       <h1 className="mt-3 text-3xl tracking-[0.04em] uppercase sm:text-4xl">New Product</h1>
 
-      <ProductForm />
+      <ProductForm collections={collections} />
     </Container>
   );
 }

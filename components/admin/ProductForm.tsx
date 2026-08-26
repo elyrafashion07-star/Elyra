@@ -9,16 +9,26 @@ import { saveProduct, type ProductFormState } from "@/app/admin/products/actions
 import { IMAGE_ACCEPT } from "@/lib/productImages";
 import { PARCEL, PRODUCT_WEIGHT } from "@/lib/parcel";
 import { slugify } from "@/lib/slug";
-import type { Product } from "@/lib/types";
+import type { Collection, Product } from "@/lib/types";
 
 /**
  * Add or edit a product.
  *
- * Four fields, on purpose: name, description, price, one photo. The web address,
- * the weight and the box size are worked out for you, and anything else a
- * product row can hold keeps whatever it already had.
+ * Four fields to fill in, on purpose: name, description, price, one photo. The
+ * web address, the weight and the box size are worked out for you, and anything
+ * else a product row can hold keeps whatever it already had.
+ *
+ * The collection tick-boxes are the exception — nothing can guess where a piece
+ * belongs, and an untagged product only shows up under "All".
  */
-export default function ProductForm({ product }: { /** Absent when creating. */ product?: Product }) {
+export default function ProductForm({
+  product,
+  collections,
+}: {
+  /** Absent when creating. */
+  product?: Product;
+  collections: Collection[];
+}) {
   const [state, formAction] = useActionState<ProductFormState, FormData>(saveProduct, {});
 
   const value = (key: string, fallback: string | number | undefined) =>
@@ -29,6 +39,7 @@ export default function ProductForm({ product }: { /** Absent when creating. */ 
   const [title, setTitle] = useState(value("title", product?.title));
 
   const error = state.fieldErrors ?? {};
+  const tagged = new Set(product?.collections ?? []);
 
   return (
     <form action={formAction} className="mt-8 max-w-2xl space-y-8">
@@ -75,6 +86,34 @@ export default function ProductForm({ product }: { /** Absent when creating. */ 
 
         <PhotoField existing={product?.images?.[0]} error={error.image} />
       </div>
+
+      {/* Budget groups are worked out from the price, so they are not offered. */}
+      <fieldset className="space-y-3 border-t border-line pt-6">
+        <legend className="text-[11px] font-semibold tracking-[0.16em] uppercase">
+          Collections
+        </legend>
+        <p className="text-[12px] text-muted">
+          Where this piece shows up on the store. Budget and gift groupings are worked out
+          automatically.
+        </p>
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {collections
+            .filter((c) => c.group !== "budget")
+            .map((c) => (
+              <label key={c.handle} className="flex items-center gap-2 text-[13px]">
+                <input
+                  type="checkbox"
+                  name="collections"
+                  value={c.handle}
+                  defaultChecked={tagged.has(c.handle)}
+                  className="h-4 w-4 shrink-0 accent-ink"
+                />
+                <span className="truncate">{c.title}</span>
+              </label>
+            ))}
+        </div>
+      </fieldset>
 
       <p className="border-t border-line pt-5 text-[12px] text-muted">
         Weight ({PRODUCT_WEIGHT}) and parcel size ({PARCEL.lengthCm}×{PARCEL.breadthCm}×

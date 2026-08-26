@@ -88,8 +88,8 @@ async function freeHandle(base: string): Promise<string> {
 }
 
 /**
- * Creates or updates a product from the four things the form asks for: name,
- * description, price and one photo.
+ * Creates or updates a product from what the form asks for: name, description,
+ * price, one photo, and the collections it belongs to.
  *
  * Everything else is filled in here — the URL from the name, the weight from
  * lib/parcel.ts, and the rest from the column defaults — so there is nothing to
@@ -191,6 +191,15 @@ export async function saveProduct(
   if (error) {
     console.error("[admin] product save failed:", error.message);
     return { error: `Could not save: ${error.message}`, values };
+  }
+
+  // Collection tags are a full replace — unticking a box has to remove the row.
+  const tags = form.getAll("collections").map(String).filter(Boolean);
+  await db.from("product_collections").delete().eq("product_handle", handle);
+  if (tags.length) {
+    await db
+      .from("product_collections")
+      .insert(tags.map((collection_handle) => ({ product_handle: handle, collection_handle })));
   }
 
   revalidateStorefront(handle);
