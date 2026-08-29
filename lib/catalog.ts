@@ -67,6 +67,7 @@ export const loadCatalog = cache(async (): Promise<Product[]> => {
         : undefined,
     badge: row.badge ?? undefined,
     soldOut: row.sold_out,
+    trending: row.trending,
     images: row.images ?? [],
     gallery: row.gallery,
   }));
@@ -130,32 +131,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
   );
 }
 
-/**
- * Homepage row — "Top 15 Trending Products".
- *
- * Still a hand-picked list, but one that tolerates a handle going missing: a
- * product deleted from the admin panel drops out of the row instead of
- * rendering a hole.
- */
-const TRENDING = [
-  "twin-strings-silver-ring",
-  "mystic-evil-eye-anklet",
-  "lovers-loop-bracelet",
-  "eternal-solitaire-ring",
-  "infinity-bhai-rakhi",
-  "everyday-huggie-hoops",
-  "vajra-mens-bracelet",
-  "flora-whisper-ring",
-  "infinity-heart-pendant-set",
-  "celestial-turquoise-star-anklet",
-  "linea-luxe-bracelet",
-  "petal-drop-earrings",
-  "classic-box-chain",
-  "sparkle-hearts-anklet",
-  "royal-kurta-button-set",
-];
-
-/** Ordered as listed above, not as the database returns them. */
+/** Ordered as listed, not as the database returns them. */
 async function pick(handles: string[]): Promise<Product[]> {
   const byHandle = new Map((await loadCatalog()).map((p) => [p.handle, p]));
   return handles.flatMap((h) => {
@@ -164,11 +140,21 @@ async function pick(handles: string[]): Promise<Product[]> {
   });
 }
 
+/** How many the homepage row holds — it is titled "Top 15 Trending Products". */
+export const TRENDING_LIMIT = 15;
+
+/**
+ * Homepage row — "Top 15 Trending Products".
+ *
+ * Was a hand-written list of handles here; it is now a tick-box on the product
+ * itself, so the row is edited in the admin panel like everything else. Order
+ * follows each product's sort order.
+ */
 export async function trendingProducts(): Promise<Product[]> {
-  const picked = await pick(TRENDING);
-  // A fresh install has none of these handles; show something rather than an
-  // empty homepage row.
-  return picked.length ? picked : (await loadCatalog()).slice(0, TRENDING.length);
+  const products = await loadCatalog();
+  const picked = products.filter((p) => p.trending).slice(0, TRENDING_LIMIT);
+  // Nothing ticked yet — show something rather than an empty homepage row.
+  return picked.length ? picked : products.slice(0, TRENDING_LIMIT);
 }
 
 const COMPLETE_YOUR_LOOK = [

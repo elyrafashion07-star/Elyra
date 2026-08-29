@@ -3,7 +3,7 @@ import Container from "@/components/ui/Container";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import SectionHeading from "@/components/ui/SectionHeading";
 import TileCard from "@/components/ui/TileCard";
-import { collectionsByGroup } from "@/data/collections";
+import { collectionsByGroup } from "@/lib/collections";
 import type { Collection } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -19,17 +19,19 @@ const groups: { group: Collection["group"]; title: string; cols: string }[] = [
   { group: "gifting", title: "The Gifting Edit", cols: "grid-cols-3 lg:grid-cols-6" },
 ];
 
-export default function CollectionsIndexPage() {
+export default async function CollectionsIndexPage() {
+  const byGroup = await Promise.all(groups.map((g) => collectionsByGroup(g.group)));
+
   return (
     <Container className="py-10">
       <Breadcrumbs trail={[{ label: "Collections" }]} />
       <h1 className="mt-4 text-3xl tracking-[0.04em] uppercase sm:text-4xl">All Collections</h1>
 
-      {groups.map((g) => (
+      {groups.map((g, i) => (
         <section key={g.group} className="mt-14">
           <SectionHeading title={g.title} align="left" />
           <div className={`mt-7 grid gap-4 sm:gap-5 ${g.cols}`}>
-            {collectionsByGroup(g.group).map((c) => (
+            {byGroup[i].map((c) => (
               <TileCard
                 key={c.handle}
                 href={`/collections/${c.handle}`}

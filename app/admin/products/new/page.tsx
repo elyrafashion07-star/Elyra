@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 import ProductForm from "@/components/admin/ProductForm";
-import { collections } from "@/data/collections";
+import { loadCollections } from "@/lib/collections";
 
 export const metadata: Metadata = {
   title: "New Product · Admin",
   robots: { index: false, follow: false },
 };
 
-export default function NewProductPage() {
+export default async function NewProductPage() {
+  const collections = await loadCollections();
+
   return (
     <Container className="py-10 sm:py-14">
       <Link href="/admin/products" className="text-[12px] text-muted underline underline-offset-4">

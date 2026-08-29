@@ -11,6 +11,8 @@ export type CollectionRow = {
   description: string;
   group: "category" | "occasion" | "collection" | "budget" | "gender" | "gifting" | "feature";
   image: string | null;
+  /** Whether the homepage section for this group renders it — see 0007. */
+  show_on_home: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -38,6 +40,19 @@ export type ProductRow = {
   images: string[];
   /** Legacy placeholder count; prefer images.length. */
   gallery: number;
+  /** In the homepage "Top 15 Trending Products" row. */
+  trending: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+/** A header menu entry; `parent_id` set makes it a dropdown child. */
+export type NavItemRow = {
+  id: string;
+  label: string;
+  href: string;
+  parent_id: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -170,7 +185,16 @@ type Table<Row, Insert = Row> = {
 export type Database = {
   public: {
     Tables: {
-      collections: Table<CollectionRow, Omit<CollectionRow, "created_at" | "updated_at">>;
+      collections: Table<
+        CollectionRow,
+        Pick<CollectionRow, "handle" | "title" | "group"> &
+          Partial<Omit<CollectionRow, "handle" | "title" | "group" | "created_at" | "updated_at">>
+      >;
+      nav_items: Table<
+        NavItemRow,
+        Pick<NavItemRow, "label" | "href"> &
+          Partial<Omit<NavItemRow, "label" | "href" | "created_at" | "updated_at">>
+      >;
       // Only handle, title and price have to be given: every other column is
       // either nullable or carries a default — see 0001_init.sql — which is what
       // lets the admin form ask for four fields and no more.

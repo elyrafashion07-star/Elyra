@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import Container from "@/components/ui/Container";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import CollectionView from "@/components/collection/CollectionView";
-import { collections, getCollection } from "@/data/collections";
+import { getCollection, loadCollections } from "@/lib/collections";
 import { productsInCollection } from "@/lib/catalog";
 
-export function generateStaticParams() {
-  return collections.map((c) => ({ handle: c.handle }));
+export async function generateStaticParams() {
+  return (await loadCollections()).map((c) => ({ handle: c.handle }));
 }
 
 export async function generateMetadata({
@@ -16,14 +16,14 @@ export async function generateMetadata({
   params: Promise<{ handle: string }>;
 }): Promise<Metadata> {
   const { handle } = await params;
-  const collection = getCollection(handle);
+  const collection = await getCollection(handle);
   if (!collection) return { title: "Collection not found" };
   return { title: collection.title, description: collection.description };
 }
 
 export default async function CollectionPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
-  const collection = getCollection(handle);
+  const collection = await getCollection(handle);
   if (!collection) notFound();
 
   const items = await productsInCollection(handle);

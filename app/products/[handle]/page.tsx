@@ -5,7 +5,7 @@ import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import SectionHeading from "@/components/ui/SectionHeading";
 import ProductDetail from "@/components/product/ProductDetail";
 import ProductSlider from "@/components/product/ProductSlider";
-import { getCollection } from "@/data/collections";
+import { getCollection } from "@/lib/collections";
 import { getProduct, loadCatalog, relatedProducts } from "@/lib/catalog";
 
 export async function generateStaticParams() {
@@ -28,7 +28,7 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
   const product = await getProduct(handle);
   if (!product) notFound();
 
-  const category = getCollection(product.category);
+  const category = await getCollection(product.category);
   const related = await relatedProducts(product);
 
   // Product schema so search engines pick up price and rating.

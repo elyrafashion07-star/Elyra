@@ -13,6 +13,8 @@ export type Product = {
   variants?: { label: string; options: string[] };
   badge?: "NEW" | "BESTSELLER" | "LIMITED";
   soldOut?: boolean;
+  /** Shown in the homepage "Top 15 Trending Products" row. */
+  trending?: boolean;
   /**
    * Public Storage URLs in display order; the first is the card image.
    * Empty until someone uploads photos in the admin panel.
@@ -27,8 +29,11 @@ export type Collection = {
   title: string;
   description: string;
   group: "category" | "occasion" | "collection" | "budget" | "gender" | "gifting" | "feature";
-  /** Tile artwork in /public/images — omit to render the sized placeholder. */
+  /** Tile artwork — a Storage URL, or a path in /public/images. */
   image?: string;
+  /** Whether the matching homepage section renders it. */
+  showOnHome?: boolean;
+  sortOrder?: number;
 };
 
 export type NavItem = {

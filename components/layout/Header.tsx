@@ -8,9 +8,9 @@ import Logo from "@/components/layout/Logo";
 import MobileNav from "@/components/layout/MobileNav";
 import SearchOverlay from "@/components/layout/SearchOverlay";
 import Tooltip from "@/components/layout/Tooltip";
-import { mainNav } from "@/data/navigation";
 import { cartCount, useCart } from "@/lib/store/cart";
 import { useWishlist } from "@/lib/store/wishlist";
+import type { NavItem } from "@/lib/types";
 
 /**
  * The header icons are 22–24px, which is well under a comfortable thumb target.
@@ -19,7 +19,11 @@ import { useWishlist } from "@/lib/store/wishlist";
  */
 const tapTarget = "relative after:absolute after:-inset-2.5 after:content-['']";
 
-export default function Header() {
+/**
+ * `nav` is passed in rather than imported: the menu lives in the database now,
+ * and this is a client component — the root layout reads it on the server.
+ */
+export default function Header({ nav }: { nav: NavItem[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -53,7 +57,7 @@ export default function Header() {
 
           {/* desktop nav */}
           <nav className="hidden items-center xl:flex xl:gap-6 2xl:gap-12">
-            {mainNav.map((item) => (
+            {nav.map((item) => (
               <div key={item.label} className="group relative">
                 <Link
                   href={item.href}
@@ -105,7 +109,7 @@ export default function Header() {
         </div>
       </header>
 
-      <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileNav nav={nav} open={menuOpen} onClose={() => setMenuOpen(false)} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );

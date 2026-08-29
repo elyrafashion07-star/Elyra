@@ -1,9 +1,8 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from "@/lib/productImages";
+import { imageProblem, removeFolder, uploadImage } from "@/lib/adminUpload";
 import { PRODUCT_WEIGHT } from "@/lib/parcel";
 import { slugify } from "@/lib/slug";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
@@ -32,39 +31,6 @@ const BUCKET = "product-images";
  */
 async function requireAdmin(): Promise<boolean> {
   return isAdmin();
-}
-
-function extensionFor(type: string): string {
-  if (type === "image/png") return "png";
-  if (type === "image/webp") return "webp";
-  if (type === "image/avif") return "avif";
-  return "jpg";
-}
-
-/**
- * Uploads one file and returns its public URL.
- *
- * Names are `<handle>/<uuid>.<ext>` rather than `<handle>/<slot>.<ext>`: reusing
- * a path would leave the CDN serving the previous photo from cache long after it
- * was replaced.
- */
-async function uploadImage(handle: string, file: File): Promise<string | null> {
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) return null;
-  if (file.size > MAX_IMAGE_BYTES) return null;
-
-  const db = getSupabaseAdmin();
-  const path = `${handle}/${randomUUID()}.${extensionFor(file.type)}`;
-
-  const { error } = await db.storage
-    .from(BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false });
-
-  if (error) {
-    console.error("[admin] image upload failed:", error.message);
-    return null;
-  }
-
-  return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 /**
@@ -140,11 +106,8 @@ export async function saveProduct(
   const picked = file instanceof File && file.size > 0 ? file : null;
   const existing = String(form.get("image_url_0") ?? "").trim();
 
-  if (picked && !ALLOWED_IMAGE_TYPES.includes(picked.type)) {
-    fieldErrors.image = "That file is not a usable image — pick a JPG, PNG, WebP or AVIF.";
-  } else if (picked && picked.size > MAX_IMAGE_BYTES) {
-    const mb = (picked.size / 1024 / 1024).toFixed(1);
-    fieldErrors.image = `That photo is ${mb} MB, which is too big to upload. Please pick a lighter one.`;
+  if (picked && imageProblem(picked)) {
+    fieldErrors.image = imageProblem(picked) ?? undefined;
   } else if (!picked && !existing) {
     fieldErrors.image = "Add one product photo.";
   }
@@ -157,7 +120,7 @@ export async function saveProduct(
 
   let image = existing;
   if (picked) {
-    const uploaded = await uploadImage(handle, picked);
+    const uploaded = await uploadImage(BUCKET, handle, picked);
     if (!uploaded) {
       return {
         error: "Could not save.",
@@ -174,6 +137,7 @@ export async function saveProduct(
     title,
     description,
     price,
+    trending: form.get("trending") === "on",
     images: [image],
     // Kept in step with the real images so nothing renders empty slots.
     gallery: 1,
@@ -214,12 +178,9 @@ export async function deleteProduct(form: FormData): Promise<void> {
 
   const db = getSupabaseAdmin();
 
-  // Storage is not cascaded by the database — list and remove the folder too, or
-  // the files sit there paying for themselves forever.
-  const { data: files } = await db.storage.from(BUCKET).list(handle);
-  if (files?.length) {
-    await db.storage.from(BUCKET).remove(files.map((f) => `${handle}/${f.name}`));
-  }
+  // Storage is not cascaded by the database — remove the folder too, or the
+  // files sit there paying for themselves forever.
+  await removeFolder(BUCKET, handle);
 
   // order_items snapshot their own copy of title and price, so past orders are
   // unaffected by this — see 0004_orders.sql.

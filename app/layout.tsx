@@ -9,6 +9,7 @@ import CartDrawer from "@/components/layout/CartDrawer";
 import MobileToolbar from "@/components/layout/MobileToolbar";
 import WhatsAppFloat from "@/components/layout/WhatsAppFloat";
 import { site } from "@/data/site";
+import { loadNav } from "@/lib/nav";
 
 const display = Cormorant_Garamond({
   variable: "--font-display",
@@ -34,13 +35,17 @@ export const metadata: Metadata = {
   keywords: ["925 sterling silver", "silver jewellery India", "anklets", "rakhi", "silver rings"],
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // The header menu is editable in the admin panel, so it is read here — the
+  // header itself is a client component and cannot fetch it.
+  const nav = await loadNav();
+
   return (
     <html lang="en">
       {/* pb clears the fixed MobileToolbar (h-14) so the footer isn't hidden behind it. */}
       <body className={`${display.variable} ${body.variable} pb-14 antialiased xl:pb-0`}>
         <AnnouncementBar />
-        <Header />
+        <Header nav={nav} />
         <main>{children}</main>
         <Footer />
         <CartDrawer />

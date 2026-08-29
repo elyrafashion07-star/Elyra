@@ -7,6 +7,11 @@
  * Idempotent: every table is upserted on its primary key, so re-running syncs
  * changes rather than duplicating. Reads credentials from .env.local.
  *
+ * Collections are editable in the admin panel now, so re-running this resets a
+ * title or a tile photo that was changed there back to what data/collections.ts
+ * says. It leaves show_on_home alone — only the columns listed below are sent —
+ * but treat it as a first-run tool rather than a sync.
+ *
  * Products are NOT seeded from here any more. They live in Supabase and are
  * edited in the admin panel, so there is no file to copy them from — and
  * re-running this used to overwrite whatever the admin panel had changed.

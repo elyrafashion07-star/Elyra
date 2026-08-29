@@ -4,11 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Heart, LogOut, User, X } from "lucide-react";
 import SignOutForm from "@/components/account/SignOutForm";
-import { mainNav } from "@/data/navigation";
 import { site } from "@/data/site";
 import { displayName, useAuth } from "@/lib/store/auth";
+import type { NavItem } from "@/lib/types";
 
-export default function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function MobileNav({
+  nav,
+  open,
+  onClose,
+}: {
+  nav: NavItem[];
+  open: boolean;
+  onClose: () => void;
+}) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const { user } = useAuth();
 
@@ -55,7 +63,7 @@ export default function MobileNav({ open, onClose }: { open: boolean; onClose: (
         </div>
 
         <nav className="flex-1 overflow-y-auto py-2">
-          {mainNav.map((item) => {
+          {nav.map((item) => {
             const isOpen = expanded === item.label;
             return (
               <div key={item.label} className="border-b border-line/60">

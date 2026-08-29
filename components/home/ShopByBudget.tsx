@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { collectionMap, homeBudgets } from "@/data/collections";
+import { homeCollections } from "@/lib/collections";
 
 /**
  * Navy medallions, drawn in CSS — no artwork needed.
@@ -9,7 +9,10 @@ import { collectionMap, homeBudgets } from "@/data/collections";
  * Two stacked layers: the tilted oval (rim + gradient) sits behind an upright
  * text layer, so the badge leans but "UNDER ₹1599" stays level.
  */
-export default function ShopByBudget() {
+export default async function ShopByBudget() {
+  const budgets = await homeCollections("budget");
+  if (!budgets.length) return null;
+
   return (
     <section className="py-14 sm:py-16">
       <Container>
@@ -18,15 +21,13 @@ export default function ShopByBudget() {
           subtitle="Explore our premium collection sorted by budget."
         />
         <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 sm:gap-6 lg:grid-cols-6 lg:gap-5">
-          {homeBudgets.map((handle) => {
-            const c = collectionMap.get(handle);
-            if (!c) return null;
+          {budgets.map((c) => {
             const amount = c.title.replace(/\D/g, "");
 
             return (
               <Link
-                key={handle}
-                href={`/collections/${handle}`}
+                key={c.handle}
+                href={`/collections/${c.handle}`}
                 className="group flex flex-col items-center"
               >
                 <div className="relative mx-auto aspect-[9/10] w-full max-w-45">

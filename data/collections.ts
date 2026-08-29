@@ -15,7 +15,7 @@ export const collections: Collection[] = [
   { handle: "earrings", title: "Earrings", description: "Studs, hoops and drops that carry from desk to dinner.", group: "category", image: "/images/categories/earrings.jpg" },
   { handle: "pendants", title: "Pendant Sets", description: "Pendants with matching chains, ready to gift.", group: "category", image: "/images/categories/pendant_set.jpg" },
   { handle: "brooches", title: "Brooches", description: "Sherwani and blazer brooches with old-world craft.", group: "category", image: "/images/categories/brooches.jpg" },
-  // No tile art yet — kept out of the homepage slider (see homeCategories below).
+  // No tile art yet — seeded with show_on_home off, see 0007.
   { handle: "kurta-buttons", title: "Men Kurta Buttons", description: "Sterling silver button sets for kurtas and bandhgalas.", group: "category" },
   { handle: "bracelets-men", title: "Men Bracelets", description: "Heavier links and rudraksh-inspired silver for men.", group: "category", image: "/images/categories/men_bracelets.jpg" },
   { handle: "men-rings", title: "Men Rings", description: "Bold bands with matte, oxidised and polished finishes.", group: "category" },
@@ -61,59 +61,9 @@ export const collections: Collection[] = [
   { handle: "gift-for-him", title: "Gift for Him", description: "Every men's gift in one place.", group: "gifting" },
 ];
 
-export const collectionMap = new Map(collections.map((c) => [c.handle, c]));
-
-export function getCollection(handle: string) {
-  return collectionMap.get(handle);
-}
-
-export function collectionsByGroup(group: Collection["group"]) {
-  return collections.filter((c) => c.group === group);
-}
-
 /**
- * Homepage: Shop by Category — order matches the reference layout.
- * kurta-buttons and men-rings are deliberately left out of the slider; both
- * collections still exist and are reachable from the For Him menu.
+ * Everything below this line used to drive the site. It is the seed for the
+ * `collections` table now (scripts/seed-supabase.ts) and nothing else reads it —
+ * the storefront and the admin panel both go through lib/collections.ts, which
+ * is what lets a collection added in the admin panel appear on the homepage.
  */
-export const homeCategories = [
-  "rings",
-  "bracelets",
-  "anklets",
-  "neck-chains",
-  "earrings",
-  "pendants",
-  "brooches",
-  "bracelets-men",
-];
-
-export const homeOccasions = ["birthday", "anniversary", "wedding", "daily-wear"];
-
-export const homeCollections = [
-  "luxe-gold-plated",
-  "signature-sparkle",
-  "no-bad-vibes",
-  "celestial-aura",
-  "beachy-vibes",
-  "pearl-pop",
-  "floral-bloom",
-  "amore",
-];
-
-export const homeBudgets = [
-  "under-1599",
-  "under-2599",
-  "under-3599",
-  "under-4599",
-  "under-5599",
-  "under-6599",
-];
-
-export const homeGifting = [
-  "gift-for-wife",
-  "gift-for-husband",
-  "gift-for-sister",
-  "gift-for-brother",
-  "gift-for-mother",
-  "gift-for-father",
-];
