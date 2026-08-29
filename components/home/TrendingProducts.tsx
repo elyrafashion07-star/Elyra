@@ -3,6 +3,7 @@ import Container from "@/components/ui/Container";
 import SectionHeading from "@/components/ui/SectionHeading";
 import ProductSlider from "@/components/product/ProductSlider";
 import { trendingProducts } from "@/lib/catalog";
+import { TRENDING_LIMIT } from "@/lib/trending";
 
 export default async function TrendingProducts() {
   const products = await trendingProducts();
@@ -11,7 +12,7 @@ export default async function TrendingProducts() {
     <section className="py-14 sm:py-16">
       <Container>
         <SectionHeading
-          title="Top 15 Trending Products"
+          title={`Top ${TRENDING_LIMIT} Trending Products`}
           subtitle="Elyrafashion brings you trend-setting sterling silver jewellery designed to enhance confidence, style and sophistication."
         />
         <div className="mt-9">

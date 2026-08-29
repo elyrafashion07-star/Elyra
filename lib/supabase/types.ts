@@ -40,7 +40,7 @@ export type ProductRow = {
   images: string[];
   /** Legacy placeholder count; prefer images.length. */
   gallery: number;
-  /** In the homepage "Top 15 Trending Products" row. */
+  /** In the homepage Trending row — see lib/trending.ts. */
   trending: boolean;
   sort_order: number;
   created_at: string;

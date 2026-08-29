@@ -14,6 +14,7 @@
 import "server-only";
 import { cache } from "react";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase/client";
+import { TRENDING_LIMIT } from "@/lib/trending";
 import type { Product } from "@/lib/types";
 
 /**
@@ -140,11 +141,8 @@ async function pick(handles: string[]): Promise<Product[]> {
   });
 }
 
-/** How many the homepage row holds — it is titled "Top 15 Trending Products". */
-export const TRENDING_LIMIT = 15;
-
 /**
- * Homepage row — "Top 15 Trending Products".
+ * Homepage row — "Top 5 Trending Products".
  *
  * Was a hand-written list of handles here; it is now a tick-box on the product
  * itself, so the row is edited in the admin panel like everything else. Order

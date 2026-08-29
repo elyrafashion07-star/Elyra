@@ -13,7 +13,7 @@ export type Product = {
   variants?: { label: string; options: string[] };
   badge?: "NEW" | "BESTSELLER" | "LIMITED";
   soldOut?: boolean;
-  /** Shown in the homepage "Top 15 Trending Products" row. */
+  /** Shown in the homepage Trending row — see lib/trending.ts. */
   trending?: boolean;
   /**
    * Public Storage URLs in display order; the first is the card image.

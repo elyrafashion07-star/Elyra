@@ -15,6 +15,7 @@ import {
 import { shrinkImage } from "@/lib/shrinkImage";
 import { PARCEL, PRODUCT_WEIGHT } from "@/lib/parcel";
 import { slugify } from "@/lib/slug";
+import { TRENDING_LIMIT } from "@/lib/trending";
 import type { Collection, Product } from "@/lib/types";
 
 /**
@@ -93,8 +94,9 @@ export default function ProductForm({
         <PhotoField existing={product?.images?.[0]} error={error.image} />
       </div>
 
-      {/* One tick-box, not an ordered list: the homepage row takes the first 15
-          in sort order, so nobody has to keep a numbered list in their head. */}
+      {/* One tick-box, not an ordered list: the homepage row takes the first
+          TRENDING_LIMIT in sort order, so nobody has to keep a numbered list in
+          their head. */}
       <label className="flex items-start gap-2.5 border-t border-line pt-6 text-[13px]">
         <input
           type="checkbox"
@@ -103,10 +105,10 @@ export default function ProductForm({
           className="mt-0.5 h-4 w-4 shrink-0 accent-ink"
         />
         <span>
-          Show in <strong className="font-semibold">Top 15 Trending Products</strong> on the
-          homepage
+          Show in <strong className="font-semibold">Top {TRENDING_LIMIT} Trending Products</strong>{" "}
+          on the homepage
           <span className="mt-0.5 block text-[11px] text-muted">
-            The row holds 15; beyond that the extras wait their turn.
+            The row holds {TRENDING_LIMIT}; beyond that the extras wait their turn.
           </span>
         </span>
       </label>
