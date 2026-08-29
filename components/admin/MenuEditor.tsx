@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { ChevronDown, ChevronRight, Loader2, Plus, Trash2 } from "lucide-react";
 import { deleteMenuItem, saveMenuItem, type MenuFormState } from "@/app/admin/menu/actions";
+import { slugify } from "@/lib/slug";
 
 export type MenuItem = {
   id: string;
@@ -108,13 +109,28 @@ function ItemForm({
   const [state, formAction] = useActionState<MenuFormState, FormData>(saveMenuItem, {});
   const [round, setRound] = useState(0);
 
+  const [label, setLabel] = useState(item?.label ?? "");
+  const [href, setHref] = useState(item?.href ?? "");
+
+  // The link is written from the text, so it is only typed by hand when the
+  // entry points somewhere other than a collection. Editing it stops the
+  // mirroring — an existing entry starts out that way, since its link is
+  // already live and must not move because the wording was tidied up.
+  const [hrefEdited, setHrefEdited] = useState(Boolean(item));
+
   return (
     <div>
       <form
         key={round}
         action={async (data) => {
           await formAction(data);
-          if (resetOnSave) setRound((n) => n + 1);
+          if (!resetOnSave) return;
+          // Controlled inputs, so the "add" row has to be emptied by hand;
+          // `round` clears the uncontrolled position box alongside it.
+          setLabel("");
+          setHref("");
+          setHrefEdited(false);
+          setRound((n) => n + 1);
         }}
         className="flex flex-wrap items-end gap-2"
       >
@@ -127,7 +143,12 @@ function ItemForm({
           </span>
           <input
             name="label"
-            defaultValue={item?.label ?? ""}
+            value={label}
+            onChange={(e) => {
+              const next = e.currentTarget.value;
+              setLabel(next);
+              if (!hrefEdited) setHref(next.trim() ? `/collections/${slugify(next)}` : "");
+            }}
             placeholder="Rakhi Collection 2026"
             className="w-full border border-line bg-white px-3 py-2.5 text-sm outline-none focus:border-gold"
           />
@@ -135,11 +156,15 @@ function ItemForm({
 
         <label className="min-w-0 flex-[3_1_12rem]">
           <span className="mb-1 block text-[10px] font-semibold tracking-[0.14em] uppercase text-muted">
-            Link
+            Link{hrefEdited ? "" : " · filled in for you"}
           </span>
           <input
             name="href"
-            defaultValue={item?.href ?? ""}
+            value={href}
+            onChange={(e) => {
+              setHrefEdited(true);
+              setHref(e.currentTarget.value);
+            }}
             placeholder="/collections/rakhi-2026"
             className="w-full border border-line bg-white px-3 py-2.5 text-sm outline-none focus:border-gold"
           />
