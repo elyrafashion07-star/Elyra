@@ -10,6 +10,17 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   : null;
 
 const nextConfig: NextConfig = {
+  /**
+   * A product photo is posted to a server action, and server actions cap the
+   * request body at 1 MB by default — anything bigger threw a server-side
+   * exception before saveProduct ever ran, which is what made "add product" fail
+   * on phones (their camera JPEGs are several MB) but work on machines with
+   * small images. The form now shrinks pictures in the browser, so this is the
+   * backstop; 4.5 MB is the most a Vercel serverless function will accept.
+   */
+  experimental: {
+    serverActions: { bodySizeLimit: "4.5mb" },
+  },
   images: {
     remotePatterns: supabaseHost
       ? [

@@ -6,7 +6,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader2, Upload, X } from "lucide-react";
 import { saveProduct, type ProductFormState } from "@/app/admin/products/actions";
-import { IMAGE_ACCEPT } from "@/lib/productImages";
+import {
+  IMAGE_ACCEPT,
+  MAX_IMAGE_BYTES,
+  RESIZE_ABOVE_BYTES,
+  RESIZE_MAX_EDGE,
+} from "@/lib/productImages";
 import { PARCEL, PRODUCT_WEIGHT } from "@/lib/parcel";
 import { slugify } from "@/lib/slug";
 import type { Collection, Product } from "@/lib/types";
@@ -139,8 +144,54 @@ export default function ProductForm({
 function PhotoField({ existing, error }: { existing?: string; error?: string }) {
   const [url, setUrl] = useState(existing ?? "");
   const [preview, setPreview] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const shown = preview ?? url;
+  const message = localError ?? error;
+
+  /**
+   * Shrinks the picked photo before the form is ever submitted.
+   *
+   * A phone camera JPEG is several megabytes, and a server action rejects a
+   * request body over a few MB outright — the save died with a server error
+   * rather than anything this form could report. Resizing here means the upload
+   * is a few hundred KB whatever the camera produced.
+   */
+  async function pick(input: HTMLInputElement) {
+    const file = input.files?.[0];
+    setLocalError(null);
+
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const usable = file.size > RESIZE_ABOVE_BYTES ? ((await shrink(file)) ?? file) : file;
+
+      if (usable.size > MAX_IMAGE_BYTES) {
+        input.value = "";
+        setPreview(null);
+        setLocalError(
+          `That photo is ${(usable.size / 1024 / 1024).toFixed(1)} MB and could not be made smaller. Please pick a lighter one.`,
+        );
+        return;
+      }
+
+      // Put the smaller file back on the input — this is what gets submitted.
+      if (usable !== file) {
+        const box = new DataTransfer();
+        box.items.add(usable);
+        input.files = box.files;
+      }
+
+      setPreview(URL.createObjectURL(usable));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div>
@@ -150,7 +201,7 @@ function PhotoField({ existing, error }: { existing?: string; error?: string }) 
       <div className="flex items-start gap-4">
         <div
           className={`relative h-32 w-32 shrink-0 overflow-hidden border bg-sand ${
-            error ? "border-red-300" : "border-line"
+            message ? "border-red-300" : "border-line"
           }`}
         >
           {shown ? (
@@ -185,26 +236,57 @@ function PhotoField({ existing, error }: { existing?: string; error?: string }) 
 
         <div className="space-y-2">
           <label className="inline-flex cursor-pointer items-center gap-2 border border-line px-4 py-2.5 text-[11px] transition-colors hover:border-gold">
-            <Upload className="h-3 w-3" />
-            {shown ? "Replace photo" : "Upload photo"}
+            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+            {busy ? "Preparing…" : shown ? "Replace photo" : "Upload photo"}
             <input
               type="file"
               name="image_0"
               accept={IMAGE_ACCEPT}
-              onChange={(e) => {
-                const file = e.currentTarget.files?.[0];
-                // Local preview only — the file itself is uploaded on submit.
-                setPreview(file ? URL.createObjectURL(file) : null);
-              }}
+              onChange={(e) => pick(e.currentTarget)}
               className="hidden"
             />
           </label>
-          <p className="text-[11px] text-muted">JPG, PNG, WebP or AVIF · up to 5 MB</p>
-          <FieldError message={error} />
+          <p className="text-[11px] text-muted">
+            JPG, PNG, WebP or AVIF. Big photos are shrunk automatically.
+          </p>
+          <FieldError message={message} />
         </div>
       </div>
     </div>
   );
+}
+
+/**
+ * Redraws an image at most RESIZE_MAX_EDGE across and re-encodes it as JPEG.
+ *
+ * Returns null if the browser cannot decode the file (an iPhone HEIC outside
+ * Safari, say) — the caller then falls back to the original, and the size check
+ * catches it.
+ */
+async function shrink(file: File): Promise<File | null> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, RESIZE_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85),
+    );
+    if (!blob) return null;
+
+    const name = file.name.replace(/\.[^.]+$/, "") || "photo";
+    return new File([blob], `${name}.jpg`, { type: "image/jpeg" });
+  } catch {
+    return null;
+  }
 }
 
 function Label({ children }: { children: React.ReactNode }) {

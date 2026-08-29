@@ -144,7 +144,7 @@ export async function saveProduct(
     fieldErrors.image = "That file is not a usable image — pick a JPG, PNG, WebP or AVIF.";
   } else if (picked && picked.size > MAX_IMAGE_BYTES) {
     const mb = (picked.size / 1024 / 1024).toFixed(1);
-    fieldErrors.image = `That photo is ${mb} MB. The limit is 5 MB — use a smaller one.`;
+    fieldErrors.image = `That photo is ${mb} MB, which is too big to upload. Please pick a lighter one.`;
   } else if (!picked && !existing) {
     fieldErrors.image = "Add one product photo.";
   }
