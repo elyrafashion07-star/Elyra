@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Container from "@/components/ui/Container";
 import MenuEditor from "@/components/admin/MenuEditor";
+import { loadCollections } from "@/lib/collections";
+import { GROUPS } from "@/lib/collectionGroups";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { infoPages, policyPages } from "@/data/pages";
 
 export const metadata: Metadata = {
   title: "Menu · Admin",
@@ -12,12 +15,41 @@ export default async function AdminMenuPage() {
   // Read with the service-role client rather than lib/nav: this needs the ids
   // and the flat shape, and it must not fall back to the file when the table is
   // empty — an empty table here means "you have not added anything yet".
-  const { data } = await getSupabaseAdmin()
-    .from("nav_items")
-    .select("id, label, href, parent_id, sort_order")
-    .order("sort_order");
+  const [collections, { data }] = await Promise.all([
+    loadCollections(),
+    getSupabaseAdmin()
+      .from("nav_items")
+      .select("id, label, href, parent_id, sort_order")
+      .order("sort_order"),
+  ]);
 
   const rows = data ?? [];
+
+  // Every address the store actually answers on, so a menu link is picked
+  // rather than typed — a typo here is a dead link in the header of every page.
+  const linkGroups = [
+    {
+      label: "Shop",
+      options: [
+        { label: "Home", href: "/" },
+        { label: "All collections", href: "/collections" },
+      ],
+    },
+    ...GROUPS.map((g) => ({
+      label: g.label,
+      options: collections
+        .filter((c) => c.group === g.value)
+        .map((c) => ({ label: c.title, href: `/collections/${c.handle}` })),
+    })).filter((g) => g.options.length),
+    {
+      label: "Pages",
+      options: infoPages.map((p) => ({ label: p.title, href: `/pages/${p.slug}` })),
+    },
+    {
+      label: "Policies",
+      options: policyPages.map((p) => ({ label: p.title, href: `/policies/${p.slug}` })),
+    },
+  ];
 
   return (
     <Container className="py-10 sm:py-14">
@@ -28,6 +60,7 @@ export default async function AdminMenuPage() {
       </p>
 
       <MenuEditor
+        linkGroups={linkGroups}
         items={rows.map((r) => ({
           id: r.id,
           label: r.label,
