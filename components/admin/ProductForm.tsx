@@ -8,6 +8,7 @@ import { Loader2, Upload, X } from "lucide-react";
 import { saveProduct, type ProductFormState } from "@/app/admin/products/actions";
 import {
   IMAGE_ACCEPT,
+  IMAGE_SLOTS,
   MAX_IMAGE_BYTES,
   RESIZE_ABOVE_BYTES,
   RESIZE_MAX_EDGE,
@@ -21,9 +22,9 @@ import type { Collection, Product } from "@/lib/types";
 /**
  * Add or edit a product.
  *
- * Four fields to fill in, on purpose: name, description, price, one photo. The
- * web address, the weight and the box size are worked out for you, and anything
- * else a product row can hold keeps whatever it already had.
+ * Four things to fill in, on purpose: name, description, price and the photos.
+ * The web address, the weight and the box size are worked out for you, and
+ * anything else a product row can hold keeps whatever it already had.
  *
  * The collection tick-boxes are the exception — nothing can guess where a piece
  * belongs, and an untagged product only shows up under "All".
@@ -91,7 +92,23 @@ export default function ProductForm({
           hint="Rupees only, e.g. 2499"
         />
 
-        <PhotoField existing={product?.images?.[0]} error={error.image} />
+        <div>
+          <Label>Photos</Label>
+          <p className="-mt-0.5 mb-2 text-[11px] text-muted">
+            Up to {IMAGE_SLOTS}. The first one is what product cards show.
+          </p>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            {Array.from({ length: IMAGE_SLOTS }, (_, slot) => (
+              <PhotoField
+                key={slot}
+                slot={slot}
+                existing={product?.images?.[slot]}
+                error={state.imageSlot === slot ? error.image : undefined}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* One tick-box, not an ordered list: the homepage row takes the first
@@ -162,7 +179,15 @@ export default function ProductForm({
  * The current URL rides along in a hidden input so a submit that touches no file
  * keeps the existing picture; clearing that input is what removes it.
  */
-function PhotoField({ existing, error }: { existing?: string; error?: string }) {
+function PhotoField({
+  slot,
+  existing,
+  error,
+}: {
+  slot: number;
+  existing?: string;
+  error?: string;
+}) {
   const [url, setUrl] = useState(existing ?? "");
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -215,64 +240,57 @@ function PhotoField({ existing, error }: { existing?: string; error?: string }) 
   }
 
   return (
-    <div>
-      <Label>Photo</Label>
-      <input type="hidden" name="image_url_0" value={url} />
+    <div className="space-y-2">
+      <input type="hidden" name={`image_url_${slot}`} value={url} />
 
-      <div className="flex items-start gap-4">
-        <div
-          className={`relative h-32 w-32 shrink-0 overflow-hidden border bg-sand ${
-            message ? "border-red-300" : "border-line"
-          }`}
-        >
-          {shown ? (
-            <Image
-              src={shown}
-              alt=""
-              fill
-              sizes="128px"
-              className="object-cover"
-              unoptimized={Boolean(preview)}
-            />
-          ) : (
-            <span className="flex h-full items-center justify-center text-[11px] text-muted">
-              No photo
-            </span>
-          )}
+      <div
+        className={`relative aspect-square overflow-hidden border bg-sand ${
+          message ? "border-red-300" : "border-line"
+        }`}
+      >
+        {shown ? (
+          <Image
+            src={shown}
+            alt=""
+            fill
+            sizes="200px"
+            className="object-cover"
+            unoptimized={Boolean(preview)}
+          />
+        ) : (
+          <span className="flex h-full items-center justify-center px-2 text-center text-[11px] text-muted">
+            {slot === 0 ? "Card photo" : `Photo ${slot + 1}`}
+          </span>
+        )}
 
-          {shown ? (
-            <button
-              type="button"
-              onClick={() => {
-                setUrl("");
-                setPreview(null);
-              }}
-              aria-label="Remove photo"
-              className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink/80 text-cream"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          ) : null}
-        </div>
-
-        <div className="space-y-2">
-          <label className="inline-flex cursor-pointer items-center gap-2 border border-line px-4 py-2.5 text-[11px] transition-colors hover:border-gold">
-            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-            {busy ? "Preparing…" : shown ? "Replace photo" : "Upload photo"}
-            <input
-              type="file"
-              name="image_0"
-              accept={IMAGE_ACCEPT}
-              onChange={(e) => pick(e.currentTarget)}
-              className="hidden"
-            />
-          </label>
-          <p className="text-[11px] text-muted">
-            JPG, PNG, WebP or AVIF. Big photos are shrunk automatically.
-          </p>
-          <FieldError message={message} />
-        </div>
+        {shown ? (
+          <button
+            type="button"
+            onClick={() => {
+              setUrl("");
+              setPreview(null);
+            }}
+            aria-label={`Remove photo ${slot + 1}`}
+            className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink/80 text-cream"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
       </div>
+
+      <label className="flex cursor-pointer items-center justify-center gap-1.5 border border-line py-2 text-[11px] transition-colors hover:border-gold">
+        {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+        {busy ? "Preparing…" : shown ? "Replace" : "Upload"}
+        <input
+          type="file"
+          name={`image_${slot}`}
+          accept={IMAGE_ACCEPT}
+          onChange={(e) => pick(e.currentTarget)}
+          className="hidden"
+        />
+      </label>
+
+      <FieldError message={message} />
     </div>
   );
 }

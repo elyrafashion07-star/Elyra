@@ -46,11 +46,18 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
         ? "https://schema.org/OutOfStock"
         : "https://schema.org/InStock",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: product.rating,
-      reviewCount: product.reviews,
-    },
+    // Only when real reviews back it: an AggregateRating with reviewCount 0 is
+    // invalid structured data, and search engines treat inventing one as
+    // something worse than leaving it out.
+    ...(product.reviews > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: product.rating,
+            reviewCount: product.reviews,
+          },
+        }
+      : {}),
   };
 
   return (

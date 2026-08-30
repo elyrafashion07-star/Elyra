@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { imageProblem, removeFolder, uploadImage } from "@/lib/adminUpload";
+import { IMAGE_SLOTS } from "@/lib/productImages";
 import { PRODUCT_WEIGHT } from "@/lib/parcel";
+import { newRating } from "@/lib/rating";
 import { slugify } from "@/lib/slug";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/supabase/server";
@@ -16,6 +18,8 @@ export type ProductFormState = {
   error?: string;
   /** Shown under the input it names, so the wrong field is obvious. */
   fieldErrors?: Partial<Record<ProductField, string>>;
+  /** Which photo the `image` message belongs to. */
+  imageSlot?: number;
   /** Echoed back so a rejected submit does not empty the form. */
   values?: Record<string, string>;
 };
@@ -55,7 +59,7 @@ async function freeHandle(base: string): Promise<string> {
 
 /**
  * Creates or updates a product from what the form asks for: name, description,
- * price, one photo, and the collections it belongs to.
+ * price, up to IMAGE_SLOTS photos, and the collections it belongs to.
  *
  * Everything else is filled in here — the URL from the name, the weight from
  * lib/parcel.ts, and the rest from the column defaults — so there is nothing to
@@ -100,35 +104,61 @@ export async function saveProduct(
     fieldErrors.price = `“${priceRaw}” is not a number. Enter rupees only, like 2499.`;
   } else if (price <= 0) fieldErrors.price = "Price must be more than ₹0.";
 
-  // A picked file replaces the photo; the existing URL rides along in a hidden
-  // input so a save that touches no file keeps it.
-  const file = form.get("image_0");
-  const picked = file instanceof File && file.size > 0 ? file : null;
-  const existing = String(form.get("image_url_0") ?? "").trim();
+  // A picked file replaces that slot's photo; the existing URL rides along in a
+  // hidden input, so a save that touches no file keeps what is already there.
+  const slots = Array.from({ length: IMAGE_SLOTS }, (_, slot) => {
+    const file = form.get(`image_${slot}`);
+    return {
+      slot,
+      picked: file instanceof File && file.size > 0 ? file : null,
+      existing: String(form.get(`image_url_${slot}`) ?? "").trim(),
+    };
+  });
 
-  if (picked && imageProblem(picked)) {
-    fieldErrors.image = imageProblem(picked) ?? undefined;
-  } else if (!picked && !existing) {
-    fieldErrors.image = "Add one product photo.";
+  let imageSlot: number | undefined;
+  for (const { slot, picked } of slots) {
+    const problem = picked ? imageProblem(picked) : null;
+    if (problem) {
+      fieldErrors.image = problem;
+      imageSlot = slot;
+      break;
+    }
+  }
+
+  if (!fieldErrors.image && !slots.some((s) => s.picked || s.existing)) {
+    fieldErrors.image = "Add at least one photo.";
+    imageSlot = 0;
   }
 
   if (Object.keys(fieldErrors).length) {
-    return { error: "Could not save. Please fix the fields marked below.", fieldErrors, values };
+    return {
+      error: "Could not save. Please fix the fields marked below.",
+      fieldErrors,
+      imageSlot,
+      values,
+    };
   }
 
   const handle = original || (await freeHandle(slugify(title)));
 
-  let image = existing;
-  if (picked) {
-    const uploaded = await uploadImage(BUCKET, handle, picked);
-    if (!uploaded) {
-      return {
-        error: "Could not save.",
-        fieldErrors: { image: "The photo failed to upload. Please try again." },
-        values,
-      };
+  // Gaps are closed on the way in: leaving slot 2 empty and slot 3 filled must
+  // not push an undefined into the array the storefront maps over.
+  const images: string[] = [];
+  for (const { slot, picked, existing } of slots) {
+    if (picked) {
+      const uploaded = await uploadImage(BUCKET, handle, picked);
+      if (!uploaded) {
+        return {
+          error: "Could not save.",
+          fieldErrors: { image: "The photo failed to upload. Please try again." },
+          imageSlot: slot,
+          values,
+        };
+      }
+      images.push(uploaded);
+    } else if (existing) {
+      images.push(existing);
     }
-    image = uploaded;
   }
 
   const db = getSupabaseAdmin();
@@ -138,9 +168,9 @@ export async function saveProduct(
     description,
     price,
     trending: form.get("trending") === "on",
-    images: [image],
+    images,
     // Kept in step with the real images so nothing renders empty slots.
-    gallery: 1,
+    gallery: Math.max(images.length, 1),
   };
 
   // An edit is an update, not an upsert. The form no longer carries category,
@@ -150,7 +180,9 @@ export async function saveProduct(
   // should not move because someone fixed a typo in the name.
   const { error } = original
     ? await db.from("products").update(fields).eq("handle", original)
-    : await db.from("products").insert({ handle, weight: PRODUCT_WEIGHT, ...fields });
+    : await db
+        .from("products")
+        .insert({ handle, weight: PRODUCT_WEIGHT, rating: newRating(), ...fields });
 
   if (error) {
     console.error("[admin] product save failed:", error.message);
