@@ -19,15 +19,14 @@ import { slugify } from "@/lib/slug";
 import { TRENDING_LIMIT } from "@/lib/trending";
 import type { Collection, Product } from "@/lib/types";
 
+const BADGES = ["", "NEW", "BESTSELLER", "LIMITED"] as const;
+
 /**
  * Add or edit a product.
  *
- * Four things to fill in, on purpose: name, description, price and the photos.
- * The web address, the weight and the box size are worked out for you, and
- * anything else a product row can hold keeps whatever it already had.
- *
- * The collection tick-boxes are the exception — nothing can guess where a piece
- * belongs, and an untagged product only shows up under "All".
+ * Two things are never typed in here: the web address, which follows the name,
+ * and the rating, which a new product is given between 4 and 5. The parcel size
+ * is fixed for every piece. Everything else is a field.
  */
 export default function ProductForm({
   product,
@@ -48,6 +47,7 @@ export default function ProductForm({
 
   const error = state.fieldErrors ?? {};
   const tagged = new Set(product?.collections ?? []);
+  const categories = collections.filter((c) => c.group === "category");
 
   return (
     <form action={formAction} className="mt-8 max-w-2xl space-y-8">
@@ -83,14 +83,24 @@ export default function ProductForm({
           error={error.description}
         />
 
-        <Field
-          name="price"
-          label="Price (₹)"
-          inputMode="decimal"
-          defaultValue={value("price", product?.price)}
-          error={error.price}
-          hint="Rupees only, e.g. 2499"
-        />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field
+            name="price"
+            label="Price (₹)"
+            inputMode="decimal"
+            defaultValue={value("price", product?.price)}
+            error={error.price}
+            hint="Rupees only, e.g. 2499"
+          />
+          <Field
+            name="compare_at"
+            label="Compare at (₹)"
+            inputMode="decimal"
+            defaultValue={value("compare_at", product?.compareAt)}
+            error={error.compare_at}
+            hint="The struck-through price. Blank for none."
+          />
+        </div>
 
         <div>
           <Label>Photos</Label>
@@ -110,6 +120,93 @@ export default function ProductForm({
           </div>
         </div>
       </div>
+
+      <fieldset className="space-y-5 border-t border-line pt-6">
+        <legend className="text-[11px] font-semibold tracking-[0.16em] uppercase">Details</legend>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <label className="block">
+            <Label>Category</Label>
+            <select
+              name="category"
+              defaultValue={value("category", product?.category)}
+              className={inputClass()}
+            >
+              <option value="">None</option>
+              {categories.map((c) => (
+                <option key={c.handle} value={c.handle}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[11px] text-muted">
+              Shows in the Details table and drives “related products”.
+            </span>
+          </label>
+
+          <label className="block">
+            <Label>Badge</Label>
+            <select
+              name="badge"
+              defaultValue={value("badge", product?.badge)}
+              className={inputClass()}
+            >
+              {BADGES.map((b) => (
+                <option key={b} value={b}>
+                  {b || "None"}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[11px] text-muted">
+              The corner label on the product card.
+            </span>
+          </label>
+
+          <Field
+            name="material"
+            label="Material"
+            defaultValue={value("material", product?.material)}
+            hint="e.g. 925 Sterling Silver, Matte finish"
+          />
+          <Field
+            name="weight"
+            label="Weight"
+            defaultValue={value("weight", product?.weight ?? PRODUCT_WEIGHT)}
+            hint="e.g. 2.9 g. Used for the delivery estimate too."
+          />
+
+          <Field
+            name="variant_label"
+            label="Variant label"
+            defaultValue={value("variant_label", product?.variants?.label)}
+            hint="e.g. Ring Size"
+          />
+          <Field
+            name="variant_options"
+            label="Variant options"
+            defaultValue={value("variant_options", product?.variants?.options.join(", "))}
+            hint="Comma separated: 12, 14, 16. Blank for no picker."
+          />
+
+          <Field
+            name="sort_order"
+            label="Position"
+            type="number"
+            defaultValue={value("sort_order", product?.sortOrder ?? 0)}
+            hint="Lower shows first, in listings and the Trending row."
+          />
+        </div>
+
+        <label className="flex items-center gap-2.5 text-[13px]">
+          <input
+            type="checkbox"
+            name="sold_out"
+            defaultChecked={product?.soldOut ?? false}
+            className="h-4 w-4 shrink-0 accent-ink"
+          />
+          Sold out
+        </label>
+      </fieldset>
 
       {/* One tick-box, not an ordered list: the homepage row takes the first
           TRENDING_LIMIT in sort order, so nobody has to keep a numbered list in
@@ -159,8 +256,8 @@ export default function ProductForm({
       </fieldset>
 
       <p className="border-t border-line pt-5 text-[12px] text-muted">
-        Weight ({PRODUCT_WEIGHT}) and parcel size ({PARCEL.lengthCm}×{PARCEL.breadthCm}×
-        {PARCEL.heightCm} cm) are set for you — the same for every piece.
+        Parcel size ({PARCEL.lengthCm}×{PARCEL.breadthCm}×{PARCEL.heightCm} cm) is the same for
+        every piece, so it is not asked for here.
       </p>
 
       <div className="flex items-center gap-4">

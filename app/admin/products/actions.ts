@@ -4,14 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { imageProblem, removeFolder, uploadImage } from "@/lib/adminUpload";
 import { IMAGE_SLOTS } from "@/lib/productImages";
-import { PRODUCT_WEIGHT } from "@/lib/parcel";
 import { newRating } from "@/lib/rating";
 import { slugify } from "@/lib/slug";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/supabase/server";
 
 /** Which input a message belongs under. */
-export type ProductField = "title" | "description" | "price" | "image";
+export type ProductField = "title" | "description" | "price" | "compare_at" | "image";
 
 export type ProductFormState = {
   /** Shown once at the top of the form. */
@@ -58,12 +57,11 @@ async function freeHandle(base: string): Promise<string> {
 }
 
 /**
- * Creates or updates a product from what the form asks for: name, description,
- * price, up to IMAGE_SLOTS photos, and the collections it belongs to.
+ * Creates or updates a product.
  *
- * Everything else is filled in here — the URL from the name, the weight from
- * lib/parcel.ts, and the rest from the column defaults — so there is nothing to
- * get wrong while adding a product.
+ * Two things are never typed in: the URL, which comes from the name, and the
+ * rating, which a new product is given between 4 and 5. Everything else is on
+ * the form.
  *
  * The photo is uploaded only once the rest of the form is known good: uploading
  * first would leave an orphaned file in the bucket every time a field was
@@ -81,8 +79,30 @@ export async function saveProduct(
   const title = String(form.get("title") ?? "").trim();
   const description = String(form.get("description") ?? "").trim();
   const priceRaw = String(form.get("price") ?? "").trim();
+  const compareRaw = String(form.get("compare_at") ?? "").trim();
 
-  const values = { title, description, price: priceRaw };
+  const text = (key: string) => String(form.get(key) ?? "").trim();
+  const category = text("category");
+  const badge = text("badge");
+  const material = text("material");
+  const weight = text("weight");
+  const variantLabel = text("variant_label");
+  const variantOptionsRaw = text("variant_options");
+  const sortRaw = text("sort_order");
+
+  const values = {
+    title,
+    description,
+    price: priceRaw,
+    compare_at: compareRaw,
+    category,
+    badge,
+    material,
+    weight,
+    variant_label: variantLabel,
+    variant_options: variantOptionsRaw,
+    sort_order: sortRaw,
+  };
 
   // Every field is checked before anything is returned, so one submit reports
   // all of its problems instead of one per attempt.
@@ -103,6 +123,13 @@ export async function saveProduct(
   else if (!Number.isFinite(price)) {
     fieldErrors.price = `“${priceRaw}” is not a number. Enter rupees only, like 2499.`;
   } else if (price <= 0) fieldErrors.price = "Price must be more than ₹0.";
+
+  const compareAt = compareRaw ? Number(compareRaw) : null;
+  if (compareRaw && !Number.isFinite(compareAt)) {
+    fieldErrors.compare_at = `“${compareRaw}” is not a number. Enter rupees only, or leave it blank.`;
+  } else if (compareAt !== null && Number.isFinite(price) && compareAt <= price) {
+    fieldErrors.compare_at = "The struck-through price has to be higher than the price itself.";
+  }
 
   // A picked file replaces that slot's photo; the existing URL rides along in a
   // hidden input, so a save that touches no file keeps what is already there.
@@ -163,26 +190,40 @@ export async function saveProduct(
 
   const db = getSupabaseAdmin();
 
+  // Blank means "no variants", not "a variant with no options" — a label on its
+  // own would render an empty picker on the product page.
+  const variantOptions = variantOptionsRaw
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  const sortOrder = Number(sortRaw);
+
   const fields = {
     title,
     description,
     price,
+    compare_at: compareAt,
+    category: category || null,
+    badge: (badge || null) as "NEW" | "BESTSELLER" | "LIMITED" | null,
+    material: material || null,
+    weight: weight || null,
+    variant_label: variantOptions.length ? variantLabel || null : null,
+    variant_options: variantOptions.length ? variantOptions : null,
+    sold_out: form.get("sold_out") === "on",
+    sort_order: sortRaw && Number.isFinite(sortOrder) ? sortOrder : 0,
     trending: form.get("trending") === "on",
     images,
     // Kept in step with the real images so nothing renders empty slots.
     gallery: Math.max(images.length, 1),
   };
 
-  // An edit is an update, not an upsert. The form no longer carries category,
-  // material, badge or variants, and an upsert would blank every column it does
-  // not send — wiping details this form cannot even show. For the same reason
-  // the handle is left alone on an edit: the URL is already published, and it
-  // should not move because someone fixed a typo in the name.
+  // An edit is an update, not an upsert: the handle is left alone, because the
+  // URL is already published and should not move because someone fixed a typo
+  // in the name. Rating is set once, at insert — see lib/rating.ts.
   const { error } = original
     ? await db.from("products").update(fields).eq("handle", original)
-    : await db
-        .from("products")
-        .insert({ handle, weight: PRODUCT_WEIGHT, rating: newRating(), ...fields });
+    : await db.from("products").insert({ handle, rating: newRating(), ...fields });
 
   if (error) {
     console.error("[admin] product save failed:", error.message);

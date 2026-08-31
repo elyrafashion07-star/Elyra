@@ -69,6 +69,7 @@ export const loadCatalog = cache(async (): Promise<Product[]> => {
     badge: row.badge ?? undefined,
     soldOut: row.sold_out,
     trending: row.trending,
+    sortOrder: row.sort_order,
     images: row.images ?? [],
     gallery: row.gallery,
   }));

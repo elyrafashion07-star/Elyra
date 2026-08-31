@@ -15,6 +15,8 @@ export type Product = {
   soldOut?: boolean;
   /** Shown in the homepage Trending row — see lib/trending.ts. */
   trending?: boolean;
+  /** Lower shows first, wherever products are listed. */
+  sortOrder?: number;
   /**
    * Public Storage URLs in display order; the first is the card image.
    * Empty until someone uploads photos in the admin panel.
