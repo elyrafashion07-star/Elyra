@@ -108,6 +108,43 @@ export async function createRazorpayOrder({
 }
 
 /**
+ * Refunds a captured payment in full. Razorpay rejects a second refund on a
+ * payment that is already fully refunded, so repeating this is harmless.
+ */
+export async function refundPayment({
+  paymentId,
+  amountPaise,
+  notes,
+}: {
+  paymentId: string;
+  amountPaise: number;
+  notes?: Record<string, string>;
+}): Promise<{ id: string; status: string }> {
+  const { keyId, keySecret } = credentials();
+
+  const res = await fetch(`${BASE}/payments/${encodeURIComponent(paymentId)}/refund`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`,
+    },
+    body: JSON.stringify({ amount: amountPaise, speed: "normal", notes }),
+    cache: "no-store",
+  });
+
+  const body = (await res.json().catch(() => ({}))) as
+    | { id: string; status: string }
+    | { error?: { description?: string } };
+
+  if (!res.ok || !("id" in body)) {
+    const description = "error" in body ? body.error?.description : undefined;
+    throw new RazorpayError(description ?? `Razorpay refund failed (${res.status})`, res.status || 502);
+  }
+
+  return body;
+}
+
+/**
  * Verifies the handshake the checkout widget hands back to the browser.
  *
  * This is the only thing standing between "the widget said it worked" and an

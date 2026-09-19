@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { pushToShiprocket } from "@/lib/orders/fulfil";
+import { nextOrderStatus } from "@/lib/orders/status";
 import { recordTrackingEvents } from "@/lib/orders/tracking";
+import { refundPayment } from "@/lib/razorpay/client";
 import { trackAwb } from "@/lib/shiprocket/client";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/supabase/server";
@@ -71,22 +73,66 @@ export async function refreshTracking(form: FormData): Promise<void> {
       })),
     );
 
+    const db = getSupabaseAdmin();
+    const { data: order } = await db.from("orders").select("status").eq("id", orderId).maybeSingle();
+
     const update: Partial<Pick<OrderRow, "courier" | "status">> = {};
 
     if (tracking.courier) update.courier = tracking.courier;
 
-    const status = (tracking.status ?? "").toUpperCase();
-    if (status.includes("DELIVERED")) update.status = "delivered";
-    else if (status.includes("TRANSIT") || status.includes("PICKED")) update.status = "shipped";
+    // Same forward-only rules as the webhook, so a refresh can never mark a
+    // refunded order delivered or walk a delivered one back.
+    const next = order ? nextOrderStatus(order.status, tracking.status ?? "") : null;
+    if (next) update.status = next;
 
     if (Object.keys(update).length) {
-      await getSupabaseAdmin().from("orders").update(update).eq("id", orderId);
+      await db.from("orders").update(update).eq("id", orderId);
     }
   } catch (err) {
     console.error("[admin] tracking refresh failed:", err instanceof Error ? err.message : err);
   }
 
   revalidatePath("/admin/orders");
+}
+
+/**
+ * Refunds the customer in full through Razorpay, then marks the order refunded.
+ *
+ * Deliberately the only way to reach `refunded`: setting that label by hand told
+ * the customer "the amount has been returned" while nothing had moved. The status
+ * changes only after Razorpay accepts the refund, so a failure leaves the order
+ * as it was and can simply be retried.
+ */
+export async function refundOrder(form: FormData): Promise<void> {
+  if (!(await isAdmin())) return;
+
+  const orderId = String(form.get("order_id") ?? "").trim();
+  if (!orderId) return;
+
+  const db = getSupabaseAdmin();
+  const { data: order } = await db
+    .from("orders")
+    .select("id, order_no, status, total_paise, razorpay_payment_id")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if (!order?.razorpay_payment_id) return;
+  // Only money that actually moved can be returned.
+  if (!["paid", "shipped", "delivered", "cancelled"].includes(order.status)) return;
+
+  try {
+    await refundPayment({
+      paymentId: order.razorpay_payment_id,
+      amountPaise: order.total_paise,
+      notes: { order_no: order.order_no },
+    });
+    await db.from("orders").update({ status: "refunded" }).eq("id", order.id);
+  } catch (err) {
+    console.error("[admin] refund failed:", order.order_no, err instanceof Error ? err.message : err);
+  }
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${order.order_no}`);
 }
 
 /** Manual status override, for the cases no integration covers. */
@@ -96,7 +142,8 @@ export async function setOrderStatus(form: FormData): Promise<void> {
   const orderId = String(form.get("order_id") ?? "").trim();
   const status = String(form.get("status") ?? "").trim();
 
-  const ALLOWED: OrderStatus[] = ["paid", "shipped", "delivered", "cancelled", "refunded"];
+  // No "refunded": that one goes through refundOrder so money actually moves.
+  const ALLOWED: OrderStatus[] = ["paid", "shipped", "delivered", "cancelled"];
   if (!orderId || !ALLOWED.includes(status as OrderStatus)) return;
 
   await getSupabaseAdmin()

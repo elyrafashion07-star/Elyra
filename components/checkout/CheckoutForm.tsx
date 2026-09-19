@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, ShieldCheck } from "lucide-react";
-import { confirmPayment, startCheckout, type Address } from "@/app/checkout/actions";
-import { formatPrice } from "@/lib/format";
+import { confirmPayment, quoteCheckout, startCheckout, type Address, type QuoteResult } from "@/app/checkout/actions";
+import { formatPaise, formatPrice } from "@/lib/format";
 import { cartSubtotal, useCart } from "@/lib/store/cart";
 import { site } from "@/data/site";
 
@@ -51,11 +51,14 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
+// All 28 states and 8 union territories, so nobody (Chandigarh, the islands…) is
+// locked out of the form.
 const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa",
+  "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar",
+  "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Goa",
   "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Karnataka",
-  "Kerala", "Ladakh", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-  "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya",
+  "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
   "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
 ];
 
@@ -83,6 +86,38 @@ export default function CheckoutForm({
 
   const subtotal = mounted ? cartSubtotal(lines) : 0;
   const empty = mounted && lines.length === 0;
+
+  // What the server will really charge. The cart in localStorage remembers the
+  // price from when each item was added, so it can be out of date — the button
+  // and the summary show this instead, and Pay waits for it.
+  const [quote, setQuote] = useState<QuoteResult | null>(null);
+  const [quoting, setQuoting] = useState(true);
+
+  useEffect(() => {
+    if (!mounted || lines.length === 0) return;
+
+    let stale = false;
+    setQuoting(true);
+
+    quoteCheckout(lines.map((l) => ({ handle: l.handle, variant: l.variant ?? null, qty: l.qty })))
+      .then((result) => {
+        if (!stale) setQuote(result);
+      })
+      .catch(() => {
+        // Not fatal: startCheckout prices the order again on the server anyway.
+        if (!stale) setQuote(null);
+      })
+      .finally(() => {
+        if (!stale) setQuoting(false);
+      });
+
+    return () => {
+      stale = true;
+    };
+  }, [mounted, lines]);
+
+  const priced = quote?.ok ? quote : null;
+  const totalLabel = priced ? formatPaise(priced.totalPaise) : formatPrice(subtotal);
 
   /** Warns about a pin code Shiprocket cannot reach — before any money moves. */
   async function checkPincode(pincode: string) {
@@ -256,25 +291,52 @@ export default function CheckoutForm({
         <h2 className="text-[11px] font-semibold tracking-[0.16em] uppercase">Order Summary</h2>
 
         <ul className="mt-4 space-y-3 border-b border-line pb-4">
-          {lines.map((l) => (
-            <li key={`${l.handle}-${l.variant ?? ""}`} className="flex justify-between gap-3 text-[13px]">
+          {(priced
+            ? priced.items.map((i) => ({
+                key: `${i.handle}-${i.variant ?? ""}`,
+                title: i.title,
+                variant: i.variant,
+                qty: i.qty,
+                total: formatPaise(i.lineTotalPaise),
+              }))
+            : lines.map((l) => ({
+                key: `${l.handle}-${l.variant ?? ""}`,
+                title: l.title,
+                variant: l.variant ?? null,
+                qty: l.qty,
+                total: formatPrice(l.price * l.qty),
+              }))
+          ).map((l) => (
+            <li key={l.key} className="flex justify-between gap-3 text-[13px]">
               <span className="text-ink-soft">
                 {l.title}
                 {l.variant ? ` · ${l.variant}` : ""} × {l.qty}
               </span>
-              <span className="whitespace-nowrap">{formatPrice(l.price * l.qty)}</span>
+              <span className="whitespace-nowrap">{l.total}</span>
             </li>
           ))}
         </ul>
 
         <dl className="mt-4 space-y-2 text-[13px]">
-          <Row label="Subtotal" value={formatPrice(subtotal)} />
+          <Row label="Subtotal" value={priced ? formatPaise(priced.subtotalPaise) : formatPrice(subtotal)} />
+          {priced && priced.discountPaise > 0 ? (
+            <Row
+              label={`First-order discount (${priced.discountPercent}%)`}
+              value={`− ${formatPaise(priced.discountPaise)}`}
+            />
+          ) : null}
           <Row label="Shipping" value="Free" />
           <div className="flex justify-between border-t border-line pt-3 text-[15px] font-semibold">
             <dt>Total</dt>
-            <dd>{formatPrice(subtotal)}</dd>
+            <dd>{totalLabel}</dd>
           </div>
         </dl>
+
+        {quote && !quote.ok ? (
+          <p role="alert" className="mt-4 border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
+            {quote.error}
+          </p>
+        ) : null}
 
         {error ? (
           <p role="alert" className="mt-4 border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-800">
@@ -284,11 +346,11 @@ export default function CheckoutForm({
 
         <button
           type="submit"
-          disabled={pending || !mounted}
+          disabled={pending || !mounted || quoting || (quote !== null && !quote.ok)}
           className="mt-5 flex w-full items-center justify-center gap-2 bg-ink py-3.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold disabled:opacity-70"
         >
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-          {pending ? "Opening payment…" : `Pay ${formatPrice(subtotal)}`}
+          {pending ? "Opening payment…" : quoting ? "Checking prices…" : `Pay ${totalLabel}`}
         </button>
 
         <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted">

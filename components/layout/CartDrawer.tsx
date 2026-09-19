@@ -9,7 +9,7 @@ import { formatPrice } from "@/lib/format";
 import { cartSubtotal, useCart } from "@/lib/store/cart";
 
 export default function CartDrawer() {
-  const { lines, isOpen, close, setQty, remove, note, setNote, coupon, setCoupon, add } = useCart();
+  const { lines, isOpen, close, setQty, remove, note, setNote, add } = useCart();
   const { products: upsell } = useUpsellProducts();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -126,19 +126,31 @@ export default function CartDrawer() {
                   />
                   <p className="mt-1.5 line-clamp-2 text-[11px] leading-tight">{p.title}</p>
                   <p className="text-[11px] font-semibold">{formatPrice(p.price)}</p>
-                  <button
-                    type="button"
-                    onClick={() => add({ handle: p.handle, title: p.title, price: p.price })}
-                    className="mt-1 w-full border border-ink py-1 text-[10px] font-semibold tracking-[0.1em] uppercase transition-colors hover:bg-ink hover:text-cream"
-                  >
-                    Add
-                  </button>
+                  {/* A piece with sizes or options cannot be added blind — the
+                      customer has to pick one, so send them to the product page. */}
+                  {p.variants ? (
+                    <Link
+                      href={`/products/${p.handle}`}
+                      onClick={close}
+                      className="mt-1 block w-full border border-ink py-1 text-center text-[10px] font-semibold tracking-[0.1em] uppercase transition-colors hover:bg-ink hover:text-cream"
+                    >
+                      Choose
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => add({ handle: p.handle, title: p.title, price: p.price })}
+                      className="mt-1 w-full border border-ink py-1 text-[10px] font-semibold tracking-[0.1em] uppercase transition-colors hover:bg-ink hover:text-cream"
+                    >
+                      Add
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* note + coupon */}
+          {/* note */}
           <div className="space-y-3 border-t border-line px-4 py-5 text-xs">
             <label className="block">
               <span className="mb-1 block font-semibold tracking-[0.1em] uppercase">
@@ -151,15 +163,6 @@ export default function CartDrawer() {
                 className="w-full resize-none border border-line bg-white p-2 outline-none focus:border-gold"
               />
             </label>
-            <label className="block">
-              <span className="mb-1 block font-semibold tracking-[0.1em] uppercase">Add a coupon</span>
-              <input
-                value={coupon}
-                onChange={(e) => setCoupon(e.target.value)}
-                placeholder="Coupon code applies at checkout"
-                className="w-full border border-line bg-white p-2 outline-none focus:border-gold"
-              />
-            </label>
           </div>
         </div>
 
@@ -169,7 +172,7 @@ export default function CartDrawer() {
             <span className="font-semibold tracking-[0.12em] uppercase">Subtotal</span>
             <span className="font-semibold">{formatPrice(subtotal)}</span>
           </div>
-          <p className="mt-1 text-[11px] text-muted">Taxes and shipping calculated at checkout.</p>
+          <p className="mt-1 text-[11px] text-muted">Free shipping · prices include all taxes.</p>
 
           <div className="my-3 grid grid-cols-3 gap-2 text-[10px] text-muted">
             <span className="flex items-center gap-1">
@@ -184,7 +187,7 @@ export default function CartDrawer() {
           </div>
 
           <Link
-            href="/cart"
+            href="/checkout"
             onClick={close}
             className="block w-full bg-ink py-3 text-center text-xs font-semibold tracking-[0.16em] uppercase text-cream transition-colors hover:bg-gold"
           >

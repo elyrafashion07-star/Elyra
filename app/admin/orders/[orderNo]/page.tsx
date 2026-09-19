@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { RefreshCw, Truck } from "lucide-react";
+import { RefreshCw, Truck, Undo2 } from "lucide-react";
 import Container from "@/components/ui/Container";
-import { refreshTracking, retryShipment, setOrderStatus } from "@/app/admin/orders/actions";
+import { refreshTracking, refundOrder, retryShipment, setOrderStatus } from "@/app/admin/orders/actions";
 import TrackingTimeline from "@/components/orders/TrackingTimeline";
 import { getTrackingEvents } from "@/lib/orders/tracking";
 import { formatPaise } from "@/lib/format";
@@ -14,7 +14,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const STATUSES = ["paid", "shipped", "delivered", "cancelled", "refunded"];
+// "refunded" is not here on purpose — it is reached through the Refund button,
+// which actually returns the money.
+const STATUSES = ["paid", "shipped", "delivered", "cancelled"];
 
 export default async function AdminOrderPage({
   params,
@@ -105,6 +107,27 @@ export default async function AdminOrderPage({
               </form>
             ) : null}
           </div>
+
+          {order.razorpay_payment_id &&
+          ["paid", "shipped", "delivered", "cancelled"].includes(order.status) ? (
+            <form action={refundOrder} className="mt-10 border border-line p-4">
+              <input type="hidden" name="order_id" value={order.id} />
+              <h2 className="text-[11px] font-semibold tracking-[0.16em] uppercase">Refund</h2>
+              <p className="mt-2 text-[13px] text-ink-soft">
+                Returns {formatPaise(order.total_paise)} to the customer through Razorpay and marks
+                the order refunded. This cannot be undone.
+              </p>
+              <label className="mt-3 flex items-center gap-2 text-[13px]">
+                <input type="checkbox" required /> Yes, refund the full amount
+              </label>
+              <button
+                type="submit"
+                className="mt-3 flex items-center gap-2 border border-red-300 px-5 py-2.5 text-[11px] font-semibold tracking-[0.16em] uppercase text-red-800 transition-colors hover:bg-red-50"
+              >
+                <Undo2 className="h-3.5 w-3.5" /> Refund order
+              </button>
+            </form>
+          ) : null}
 
           <h2 className="mt-10 text-[11px] font-semibold tracking-[0.16em] uppercase">Tracking</h2>
           <TrackingTimeline events={events} awb={order.awb} courier={order.courier} />

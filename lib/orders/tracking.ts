@@ -19,14 +19,34 @@ export type TrackingEventInput = {
 };
 
 /**
- * Shiprocket's dates arrive in assorted shapes ("2026-08-14 16:22:00", ISO,
- * sometimes empty). Anything unparseable falls back to now rather than throwing
- * away the checkpoint.
+ * Shiprocket's dates arrive in assorted shapes ("2026-08-14 16:22:00",
+ * "14 08 2026 16:22:00", ISO, sometimes empty) and carry no timezone. They are
+ * India time; parsing them as-is would read them in the server's zone (UTC on
+ * most hosts) and shift every checkpoint by five and a half hours. Anything
+ * unparseable falls back to now rather than throwing away the checkpoint.
  */
+const IST = "+05:30";
+
 function toIso(value: string | null | undefined): string {
-  if (!value) return new Date().toISOString();
-  const parsed = new Date(value.includes("T") ? value : value.replace(" ", "T"));
-  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+  const fallback = new Date().toISOString();
+  const raw = value?.trim();
+  if (!raw) return fallback;
+
+  let candidate = raw;
+
+  const dayFirst = raw.match(/^(\d{2})[ /-](\d{2})[ /-](\d{4})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (dayFirst) {
+    const [, dd, mm, yyyy, hh, min, ss = "00"] = dayFirst;
+    candidate = `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}${IST}`;
+  } else if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/.test(raw)) {
+    // No offset on the string: it is IST.
+    candidate = `${raw.replace(" ", "T")}${IST}`;
+  } else if (!raw.includes("T")) {
+    candidate = raw.replace(" ", "T");
+  }
+
+  const parsed = new Date(candidate);
+  return Number.isNaN(parsed.getTime()) ? fallback : parsed.toISOString();
 }
 
 /**

@@ -7,7 +7,7 @@ import FixedImage from "@/components/ui/FixedImage";
 import Badge from "@/components/ui/Badge";
 import Rating from "@/components/ui/Rating";
 import { discountPercent, formatPrice } from "@/lib/format";
-import { useCart } from "@/lib/store/cart";
+import { MAX_QTY_PER_LINE, useCart } from "@/lib/store/cart";
 import { useWishlist } from "@/lib/store/wishlist";
 import type { Product } from "@/lib/types";
 
@@ -127,7 +127,7 @@ export default function ProductDetail({ product }: { product: Product }) {
                 <Minus className="h-3.5 w-3.5" />
               </button>
               <span className="min-w-9 text-center text-sm">{qty}</span>
-              <button type="button" aria-label="Increase quantity" onClick={() => setQty(qty + 1)} className="px-3.5 py-3.5 sm:px-3 sm:py-3">
+              <button type="button" aria-label="Increase quantity" onClick={() => setQty(Math.min(MAX_QTY_PER_LINE, qty + 1))} className="px-3.5 py-3.5 sm:px-3 sm:py-3">
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </div>

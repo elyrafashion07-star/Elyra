@@ -21,9 +21,15 @@ function shiprocketDate(iso: string): string {
 /**
  * Moves an order from pending to paid, then returns it as it now stands.
  *
- * The `status = 'pending'` guard is what makes a second call harmless: it
- * updates zero rows instead of overwriting paid_at with a later timestamp or
- * clobbering the payment id that the first caller recorded.
+ * The status guard is what makes a second call harmless: it updates zero rows
+ * instead of overwriting paid_at with a later timestamp or clobbering the
+ * payment id that the first caller recorded.
+ *
+ * `failed` is allowed through as well as `pending`. Razorpay lets a customer
+ * retry on the same order after a declined attempt, and `payment.failed` for the
+ * first attempt marks the order failed before the second one succeeds — a
+ * captured payment must win over an earlier failure, or the customer is charged
+ * for an order that never ships.
  */
 export async function markOrderPaid({
   orderId,
@@ -40,9 +46,10 @@ export async function markOrderPaid({
       status: "paid",
       razorpay_payment_id: paymentId,
       paid_at: new Date().toISOString(),
+      failure_reason: null,
     })
     .eq("id", orderId)
-    .eq("status", "pending");
+    .in("status", ["pending", "failed"]);
 
   if (error) {
     // Not fatal on its own — the row is re-read below, and if the other caller

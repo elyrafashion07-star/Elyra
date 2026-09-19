@@ -37,15 +37,30 @@ Sahi hone par login confirm hoga aur available couriers + ETA + rate print honge
 
 | Cheez | Status |
 |---|---|
-| Pin code delivery check (product page) | ✅ live — credentials daalte hi chalu |
-| `GET /api/shipping/serviceability` | ✅ |
-| `GET /api/shipping/track?awb=` | ✅ |
-| Order push to Shiprocket | ⛔ checkout nahi hai (neeche dekho) |
+| Pin code delivery check (product page) | ✅ live |
+| Checkout par unserviceable pin code block | ✅ payment se pehle reject |
+| Paid order ka Shiprocket me push | ✅ `lib/orders/fulfil.ts` (fail ho to admin me "Retry shipment") |
+| AWB / courier / status webhook | ✅ `POST /api/webhooks/courier-updates` |
+| `GET /api/shipping/serviceability` | ✅ public, rate-limited |
+| `GET /api/shipping/track?awb=` | ✅ sirf admin |
 
-**Order push kyun nahi:** site pe abhi koi checkout ya order storage nahi hai — cart sirf
-browser ke localStorage me hai. Shiprocket ko order tabhi bhej sakte hain jab order
-kahin save ho raha ho. `createOrder()` function [`lib/shiprocket/client.ts`](lib/shiprocket/client.ts)
-me ready hai — checkout banne ke baad bas usse call karna hoga.
+## 4. Webhook setup
+
+Shiprocket → Settings → API → Webhooks:
+
+| Field | Value |
+|---|---|
+| URL | `https://www.elyrafashion.in/api/webhooks/courier-updates` |
+| Auth Token Type | `x-api-key` |
+| Token | `SHIPROCKET_WEBHOOK_TOKEN` ki value |
+
+- URL me `shiprocket`, `sr`, `kr` jaise words **nahi** hone chahiye, Shiprocket reject karta hai.
+- `www` wala URL do. Bina-www domain redirect karta hai aur Shiprocket redirect follow nahi karta.
+- `SHIPROCKET_WEBHOOK_TOKEN` hosting (Vercel) ke env vars me bhi daalo aur redeploy karo.
+
+## 5. AWB kab milta hai
+
+Order push sirf Shiprocket me order **banata** hai. AWB tab aata hai jab courier assign ho: Shiprocket panel me haath se, ya "auto-assign" on karke. Pickup location ka naam `SHIPROCKET_PICKUP_LOCATION` (default `Primary`) se bilkul match hona chahiye, warna har push fail hoga.
 
 ## Security
 

@@ -80,7 +80,7 @@ Budget collections (`under-1599` … `under-6599`) automatic compute hote hain p
 
 `zustand` + localStorage persist:
 
-- [lib/store/cart.ts](lib/store/cart.ts) — lines, qty, note, coupon, drawer open/close
+- [lib/store/cart.ts](lib/store/cart.ts) — lines, qty, note, drawer open/close
 - [lib/store/wishlist.ts](lib/store/wishlist.ts) — saved handles
 
 Dono hydration-safe hain — counts sirf mount ke baad render hote hain.

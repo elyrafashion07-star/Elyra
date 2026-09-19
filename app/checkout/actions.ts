@@ -9,6 +9,7 @@ import {
   razorpayKeyId,
   verifyPaymentSignature,
 } from "@/lib/razorpay/client";
+import { checkServiceability, isShiprocketConfigured } from "@/lib/shiprocket/client";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
 
@@ -38,6 +39,26 @@ export type StartResult =
     }
   | { ok: false; error: string };
 
+/** What the customer will actually be charged, computed from the database. */
+export type QuoteResult =
+  | {
+      ok: true;
+      items: {
+        handle: string;
+        title: string;
+        variant: string | null;
+        qty: number;
+        unitPaise: number;
+        lineTotalPaise: number;
+      }[];
+      subtotalPaise: number;
+      discountPaise: number;
+      discountPercent: number;
+      shippingPaise: number;
+      totalPaise: number;
+    }
+  | { ok: false; error: string };
+
 export type ConfirmResult = { ok: true; orderNo: string } | { ok: false; error: string };
 
 const PINCODE = /^[1-9][0-9]{5}$/;
@@ -60,6 +81,61 @@ function validate(address: Address): string | null {
   if (!address.state?.trim()) return "Enter the state.";
   if (!PINCODE.test(address.pincode?.trim() ?? "")) return "Enter a valid 6-digit pin code.";
   return null;
+}
+
+/**
+ * Refuses a pin code no courier can reach.
+ *
+ * Without this the customer pays and only then does Shiprocket reject the
+ * shipment, leaving a paid order that cannot go anywhere. Fails open: if the
+ * courier API itself is down, that is not a reason to stop selling.
+ */
+async function deliveryError(pincode: string): Promise<string | null> {
+  if (!isShiprocketConfigured) return null;
+
+  try {
+    const result = await checkServiceability({ deliveryPincode: pincode });
+    return result.serviceable
+      ? null
+      : `We cannot deliver to ${pincode} yet. Please try another pin code.`;
+  } catch (err) {
+    console.error("[checkout] serviceability check failed:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+/**
+ * The authoritative price for the cart, shown on the checkout page before the
+ * customer pays. The cart in localStorage carries the price from when the item
+ * was added — this is what will really be charged, including any first-order
+ * discount, so the button never promises a different number to the receipt.
+ */
+export async function quoteCheckout(lines: CartLineInput[]): Promise<QuoteResult> {
+  const user = await getUser();
+  if (!user) return { ok: false, error: "Please sign in to place an order." };
+
+  const priced = await priceCart(lines, { userId: user.id });
+  if (!priced.ok) return { ok: false, error: priced.error };
+
+  const { items, subtotalPaise, shippingPaise, discountPaise, discountPercent, totalPaise } =
+    priced.cart;
+
+  return {
+    ok: true,
+    items: items.map((i) => ({
+      handle: i.product_handle,
+      title: i.title,
+      variant: i.variant,
+      qty: i.qty,
+      unitPaise: i.unit_price_paise,
+      lineTotalPaise: i.line_total_paise,
+    })),
+    subtotalPaise,
+    shippingPaise,
+    discountPaise,
+    discountPercent,
+    totalPaise,
+  };
 }
 
 /**
@@ -90,8 +166,11 @@ export async function startCheckout({
   if (invalid) return { ok: false, error: invalid };
 
   // Prices come from the database, never from the cart the browser sent.
-  const priced = await priceCart(lines);
+  const priced = await priceCart(lines, { userId: user.id });
   if (!priced.ok) return { ok: false, error: priced.error };
+
+  const undeliverable = await deliveryError(address.pincode.trim());
+  if (undeliverable) return { ok: false, error: undeliverable };
 
   const { items, subtotalPaise, shippingPaise, discountPaise, totalPaise } = priced.cart;
   const db = getSupabaseAdmin();

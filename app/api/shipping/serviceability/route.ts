@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { allow, clientIp } from "@/lib/rateLimit";
 import { ShiprocketError, checkServiceability, isShiprocketConfigured } from "@/lib/shiprocket/client";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,12 @@ const PINCODE = /^[1-9][0-9]{5}$/;
  * The browser only ever sees the result — Shiprocket credentials stay on the server.
  */
 export async function GET(request: Request) {
+  // Public on purpose (the product page uses it), so cap it per visitor —
+  // every call spends the store's Shiprocket API quota.
+  if (!allow(`serviceability:${clientIp(request)}`, 30, 60_000)) {
+    return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
+  }
+
   const params = new URL(request.url).searchParams;
   const pincode = (params.get("pincode") ?? "").trim();
 

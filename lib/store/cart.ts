@@ -8,16 +8,23 @@ type CartState = {
   lines: CartLine[];
   isOpen: boolean;
   note: string;
-  coupon: string;
   open: () => void;
   close: () => void;
   add: (line: Omit<CartLine, "qty">, qty?: number) => void;
   remove: (handle: string, variant?: string) => void;
   setQty: (handle: string, qty: number, variant?: string) => void;
   setNote: (note: string) => void;
-  setCoupon: (coupon: string) => void;
   clear: () => void;
 };
+
+/**
+ * Mirrors MAX_QTY_PER_LINE in lib/orders/pricing.ts. That file is server-only so
+ * it cannot be imported here; the server is the one that actually enforces it,
+ * this just stops the cart from reaching a quantity checkout would reject.
+ */
+export const MAX_QTY_PER_LINE = 10;
+
+const clampQty = (qty: number) => Math.min(MAX_QTY_PER_LINE, qty);
 
 const same = (a: CartLine, handle: string, variant?: string) =>
   a.handle === handle && (a.variant ?? "") === (variant ?? "");
@@ -28,15 +35,14 @@ export const useCart = create<CartState>()(
       lines: [],
       isOpen: false,
       note: "",
-      coupon: "",
       open: () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),
       add: (line, qty = 1) =>
         set((s) => {
           const existing = s.lines.find((l) => same(l, line.handle, line.variant));
           const lines = existing
-            ? s.lines.map((l) => (same(l, line.handle, line.variant) ? { ...l, qty: l.qty + qty } : l))
-            : [...s.lines, { ...line, qty }];
+            ? s.lines.map((l) => (same(l, line.handle, line.variant) ? { ...l, qty: clampQty(l.qty + qty) } : l))
+            : [...s.lines, { ...line, qty: clampQty(qty) }];
           return { lines, isOpen: true };
         }),
       remove: (handle, variant) =>
@@ -46,13 +52,12 @@ export const useCart = create<CartState>()(
           lines:
             qty <= 0
               ? s.lines.filter((l) => !same(l, handle, variant))
-              : s.lines.map((l) => (same(l, handle, variant) ? { ...l, qty } : l)),
+              : s.lines.map((l) => (same(l, handle, variant) ? { ...l, qty: clampQty(qty) } : l)),
         })),
       setNote: (note) => set({ note }),
-      setCoupon: (coupon) => set({ coupon }),
-      clear: () => set({ lines: [], note: "", coupon: "" }),
+      clear: () => set({ lines: [], note: "" }),
     }),
-    { name: "elyrafashion-cart", partialize: (s) => ({ lines: s.lines, note: s.note, coupon: s.coupon }) },
+    { name: "elyrafashion-cart", partialize: (s) => ({ lines: s.lines, note: s.note }) },
   ),
 );
 

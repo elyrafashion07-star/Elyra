@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import { ShiprocketError, isShiprocketConfigured, trackAwb } from "@/lib/shiprocket/client";
+import { isAdmin } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/shipping/track?awb=1234567890 */
+/**
+ * GET /api/shipping/track?awb=1234567890
+ *
+ * Admin only. Nothing on the storefront calls it — customers see tracking on
+ * their own order page, scoped by RLS — and left public it let anyone look up
+ * any parcel's journey (a name and address trail) and spend the Shiprocket quota.
+ */
 export async function GET(request: Request) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+
   const awb = (new URL(request.url).searchParams.get("awb") ?? "").trim();
 
   if (!/^[A-Za-z0-9-]{6,30}$/.test(awb)) {

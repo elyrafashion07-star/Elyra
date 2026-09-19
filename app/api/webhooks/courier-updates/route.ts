@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { timingSafeEqual } from "node:crypto";
+import { nextOrderStatus } from "@/lib/orders/status";
 import { recordTrackingEvents } from "@/lib/orders/tracking";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import type { OrderRow, OrderStatus } from "@/lib/supabase/types";
+import type { OrderRow } from "@/lib/supabase/types";
 
 /**
  * Shiprocket status webhook.
@@ -12,35 +13,14 @@ import type { OrderRow, OrderStatus } from "@/lib/supabase/types";
  * pushed. Polling every pending order would be wasteful, so Shiprocket pushes
  * to us instead.
  *
- * Set it up in Shiprocket → Settings → API → Webhooks:
- *   URL    https://<site>/api/webhooks/shiprocket
+ * Set it up in Shiprocket → Settings → API → Webhooks (the URL must not contain
+ * "shiprocket", "sr", "kr" etc. — Shiprocket rejects such addresses):
+ *   URL    https://<site>/api/webhooks/courier-updates
  *   Token  the same value as SHIPROCKET_WEBHOOK_TOKEN
  *
  * Shiprocket authenticates with a shared token header rather than a signature,
  * so there is no body signing to verify here — only the token.
  */
-
-/**
- * Their status strings vary by courier and change over time, so this matches on
- * substrings and falls through to "no change" rather than guessing. An unmapped
- * status is not an error: most of them ("PICKUP SCHEDULED", "IN TRANSIT") are
- * detail we already cover with `shipped`.
- */
-function mapStatus(raw: string): OrderStatus | null {
-  const status = raw.toUpperCase();
-
-  if (status.includes("DELIVERED")) return "delivered";
-  if (status.includes("CANCEL")) return "cancelled";
-  if (
-    status.includes("SHIPPED") ||
-    status.includes("IN TRANSIT") ||
-    status.includes("PICKED UP") ||
-    status.includes("OUT FOR DELIVERY")
-  ) {
-    return "shipped";
-  }
-  return null;
-}
 
 /** Constant-time compare, so a wrong token cannot be guessed a character at a time. */
 function safeEqual(a: string, b: string): boolean {
@@ -121,15 +101,9 @@ export async function POST(request: NextRequest) {
   if (payload.awb) update.awb = String(payload.awb);
   if (payload.courier_name) update.courier = payload.courier_name;
 
-  const mapped = mapStatus(rawStatus);
-
-  // Only ever move forward. A late "in transit" callback arriving after
-  // "delivered" must not walk the order backwards, and a refunded or cancelled
-  // order is not something a courier update should overwrite.
-  const ADVANCEABLE: OrderStatus[] = ["paid", "shipped"];
-  if (mapped && ADVANCEABLE.includes(order.status) && mapped !== order.status) {
-    if (!(order.status === "shipped" && mapped === "shipped")) update.status = mapped;
-  }
+  // Forward-only, and conservative about what counts as delivered — see status.ts.
+  const nextStatus = nextOrderStatus(order.status, rawStatus);
+  if (nextStatus) update.status = nextStatus;
 
   if (!Object.keys(update).length) {
     return NextResponse.json({ ok: true, ignored: "nothing to change" });

@@ -28,13 +28,13 @@ const STATUS: Record<OrderStatus, { label: string; note: string; tone: string }>
   },
   failed: {
     label: "Payment failed",
-    note: "No money was taken. Please place the order again.",
+    note: "That payment did not go through. If any amount was deducted, your bank returns it within 5–7 working days — or message us on WhatsApp and we will check.",
     tone: "text-red-700",
   },
   cancelled: { label: "Cancelled", note: "This order was cancelled.", tone: "text-red-700" },
   shipped: { label: "Shipped", note: "On its way to you.", tone: "text-green-700" },
   delivered: { label: "Delivered", note: "Delivered. Enjoy!", tone: "text-green-700" },
-  refunded: { label: "Refunded", note: "The amount has been returned to you.", tone: "text-ink-soft" },
+  refunded: { label: "Refunded", note: "Your refund has been issued and reaches your account within 5–7 working days.", tone: "text-ink-soft" },
 };
 
 function StatusIcon({ status }: { status: OrderStatus }) {

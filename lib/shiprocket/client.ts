@@ -238,9 +238,9 @@ export type ShiprocketOrderInput = {
 };
 
 /**
- * Pushes an order to Shiprocket. Not wired to anything yet — the site has no
- * checkout, so nothing creates orders. Call this from the order-placed handler
- * once that exists, and store the returned ids against the order.
+ * Pushes an order to Shiprocket. Called by pushToShiprocket in
+ * lib/orders/fulfil.ts once an order is paid, which stores the returned ids
+ * against the order.
  */
 export async function createOrder(input: ShiprocketOrderInput) {
   const p = input.parcel ?? PARCEL;
