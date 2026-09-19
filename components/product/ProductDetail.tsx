@@ -136,7 +136,16 @@ export default function ProductDetail({ product }: { product: Product }) {
               type="button"
               disabled={product.soldOut}
               onClick={() =>
-                add({ handle: product.handle, title: product.title, price: product.price, variant }, qty)
+                add(
+                  {
+                    handle: product.handle,
+                    title: product.title,
+                    price: product.price,
+                    variant,
+                    image: product.images?.[0],
+                  },
+                  qty,
+                )
               }
               className="order-last w-full bg-ink px-8 py-3.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold disabled:cursor-not-allowed disabled:bg-muted sm:order-0 sm:w-auto sm:min-w-47.5 sm:flex-1"
             >

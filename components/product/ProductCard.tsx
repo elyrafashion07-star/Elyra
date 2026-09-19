@@ -77,16 +77,32 @@ export default function ProductCard({ product, sizes }: { product: Product; size
             <span className="text-[11px] font-semibold text-sale sm:text-xs">{off}% off</span>
           ) : null}
         </div>
-        <button
-          type="button"
-          disabled={product.soldOut}
-          onClick={() =>
-            add({ handle: product.handle, title: product.title, price: product.price })
-          }
-          className="mt-2 w-full rounded-md border border-ink bg-ink py-2.5 text-[11px] font-semibold tracking-[0.08em] uppercase text-cream transition-colors hover:bg-transparent hover:text-ink disabled:cursor-not-allowed disabled:border-line disabled:bg-sand disabled:text-muted sm:py-2 sm:text-xs sm:tracking-[0.12em]"
-        >
-          {product.soldOut ? "Sold Out" : "Add to Cart"}
-        </button>
+        {/* A piece with sizes or options cannot be added blind — checkout needs
+            the choice — so it sends the shopper to the product page to pick. */}
+        {product.variants && !product.soldOut ? (
+          <Link
+            href={`/products/${product.handle}`}
+            className="mt-2 block w-full rounded-md border border-ink bg-ink py-2.5 text-center text-[11px] font-semibold tracking-[0.08em] uppercase text-cream transition-colors hover:bg-transparent hover:text-ink sm:py-2 sm:text-xs sm:tracking-[0.12em]"
+          >
+            Choose {product.variants.label}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled={product.soldOut}
+            onClick={() =>
+              add({
+                handle: product.handle,
+                title: product.title,
+                price: product.price,
+                image: product.images?.[0],
+              })
+            }
+            className="mt-2 w-full rounded-md border border-ink bg-ink py-2.5 text-[11px] font-semibold tracking-[0.08em] uppercase text-cream transition-colors hover:bg-transparent hover:text-ink disabled:cursor-not-allowed disabled:border-line disabled:bg-sand disabled:text-muted sm:py-2 sm:text-xs sm:tracking-[0.12em]"
+          >
+            {product.soldOut ? "Sold Out" : "Add to Cart"}
+          </button>
+        )}
       </div>
     </div>
   );

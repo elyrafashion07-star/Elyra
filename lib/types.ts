@@ -49,5 +49,7 @@ export type CartLine = {
   title: string;
   price: number;
   variant?: string;
+  /** First product photo, so the cart can show what is in it. Absent on carts saved before this existed. */
+  image?: string;
   qty: number;
 };

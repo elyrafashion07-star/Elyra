@@ -14,6 +14,8 @@ type CartState = {
   remove: (handle: string, variant?: string) => void;
   setQty: (handle: string, qty: number, variant?: string) => void;
   setNote: (note: string) => void;
+  /** Fills in photos for lines that were saved without one. Never overwrites. */
+  fillImages: (images: Record<string, string>) => void;
   clear: () => void;
 };
 
@@ -55,6 +57,10 @@ export const useCart = create<CartState>()(
               : s.lines.map((l) => (same(l, handle, variant) ? { ...l, qty: clampQty(qty) } : l)),
         })),
       setNote: (note) => set({ note }),
+      fillImages: (images) =>
+        set((s) => ({
+          lines: s.lines.map((l) => (l.image || !images[l.handle] ? l : { ...l, image: images[l.handle] })),
+        })),
       clear: () => set({ lines: [], note: "" }),
     }),
     { name: "elyrafashion-cart", partialize: (s) => ({ lines: s.lines, note: s.note }) },

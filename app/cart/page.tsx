@@ -42,6 +42,7 @@ export default function CartPage() {
                   <Link href={`/products/${line.handle}`} className="w-[90px] shrink-0 sm:w-[110px]">
                     <FixedImage
                       slot="productCard"
+                      src={line.image}
                       alt={line.title}
                       label=""
                       className="rounded border border-line"

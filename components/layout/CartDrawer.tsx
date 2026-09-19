@@ -9,7 +9,7 @@ import { formatPrice } from "@/lib/format";
 import { cartSubtotal, useCart } from "@/lib/store/cart";
 
 export default function CartDrawer() {
-  const { lines, isOpen, close, setQty, remove, note, setNote, add } = useCart();
+  const { lines, isOpen, close, setQty, remove, note, setNote, add, fillImages } = useCart();
   const { products: upsell } = useUpsellProducts();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -21,6 +21,33 @@ export default function CartDrawer() {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  // Carts saved before lines carried a photo have none — look them up once, so
+  // returning shoppers see pictures too. Lives here because the drawer is mounted
+  // on every page, which also covers /cart and /checkout.
+  const missingPhotos = mounted
+    ? [...new Set(lines.filter((l) => !l.image).map((l) => l.handle))].join(",")
+    : "";
+
+  useEffect(() => {
+    if (!missingPhotos) return;
+
+    const controller = new AbortController();
+    fetch(`/api/products/by-handles?handles=${encodeURIComponent(missingPhotos)}`, {
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : { products: [] }))
+      .then((data: { products?: { handle: string; images?: string[] }[] }) => {
+        const found: Record<string, string> = {};
+        for (const p of data.products ?? []) if (p.images?.[0]) found[p.handle] = p.images[0];
+        if (Object.keys(found).length) fillImages(found);
+      })
+      .catch(() => {
+        // Photos are decoration; the cart works without them.
+      });
+
+    return () => controller.abort();
+  }, [missingPhotos, fillImages]);
 
   const count = mounted ? lines.reduce((n, l) => n + l.qty, 0) : 0;
   const subtotal = mounted ? cartSubtotal(lines) : 0;
@@ -62,9 +89,14 @@ export default function CartDrawer() {
             <ul className="divide-y divide-line">
               {lines.map((line) => (
                 <li key={`${line.handle}-${line.variant ?? ""}`} className="flex gap-3 p-4">
-                  <Link href={`/products/${line.handle}`} onClick={close} className="
-                   shrink-0">
-                    <FixedImage slot="cartThumb" alt={line.title} label="" className="rounded border border-line" />
+                  <Link href={`/products/${line.handle}`} onClick={close} className="block w-[72px] shrink-0">
+                    <FixedImage
+                      slot="cartThumb"
+                      src={line.image}
+                      alt={line.title}
+                      label=""
+                      className="rounded border border-line"
+                    />
                   </Link>
                   <div className="min-w-0 flex-1">
                     <Link
@@ -120,6 +152,7 @@ export default function CartDrawer() {
                 <div key={p.handle} className="w-[128px] shrink-0">
                   <FixedImage
                     slot="productCard"
+                    src={p.images?.[0]}
                     alt={p.title}
                     label={p.title}
                     className="rounded border border-line"
@@ -139,7 +172,9 @@ export default function CartDrawer() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => add({ handle: p.handle, title: p.title, price: p.price })}
+                      onClick={() =>
+                        add({ handle: p.handle, title: p.title, price: p.price, image: p.images?.[0] })
+                      }
                       className="mt-1 w-full border border-ink py-1 text-[10px] font-semibold tracking-[0.1em] uppercase transition-colors hover:bg-ink hover:text-cream"
                     >
                       Add
