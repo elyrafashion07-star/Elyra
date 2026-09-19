@@ -37,7 +37,7 @@ export function mapCourierStatus(raw: string): OrderStatus | null {
 }
 
 /** Only these can be moved by a courier update. */
-const ADVANCEABLE: OrderStatus[] = ["paid", "shipped"];
+const ADVANCEABLE: OrderStatus[] = ["paid", "packed", "shipped"];
 
 /**
  * The status an order should move to given a courier update, or null to leave it.

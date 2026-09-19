@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { pushToShiprocket } from "@/lib/orders/fulfil";
+import { redirect } from "next/navigation";
+import { createShipment } from "@/lib/orders/fulfil";
 import { nextOrderStatus } from "@/lib/orders/status";
 import { recordTrackingEvents } from "@/lib/orders/tracking";
 import { refundPayment } from "@/lib/razorpay/client";
@@ -16,34 +17,68 @@ import type { OrderRow, OrderStatus } from "@/lib/supabase/types";
  */
 
 /**
- * Retries a Shiprocket push that failed at checkout time.
+ * Marks a paid order as packed, creating its Shiprocket shipment on the way.
  *
- * fulfilOrder swallows Shiprocket errors on purpose: the customer's money has
- * already moved and their order is on record, so a courier outage must not turn
- * into a checkout error. That leaves orders sitting paid-but-unshipped, and this
- * is how they get sent through.
+ * This is the only thing that sends an order to Shiprocket: nothing is pushed
+ * when the customer pays, so the parcel is only booked once someone has really
+ * packed it. The status moves to `packed` only after Shiprocket accepts the
+ * order — on failure it stays `paid`, the reason is shown on the page, and
+ * pressing Pack again retries.
+ *
+ * `from` is where to land afterwards (the list or the order page) so an admin
+ * working down the queue is not thrown to a different screen.
  */
-export async function retryShipment(form: FormData): Promise<void> {
+export async function packOrder(form: FormData): Promise<void> {
   if (!(await isAdmin())) return;
 
   const orderId = String(form.get("order_id") ?? "").trim();
+  const from = String(form.get("from") ?? "") === "list" ? "list" : "order";
   if (!orderId) return;
 
   const db = getSupabaseAdmin();
-
-  // Clear the claim first, or pushToShiprocket sees the earlier attempt's marker
-  // and stands down thinking another caller has it.
-  await db
-    .from("orders")
-    .update({ shipment_requested_at: null })
-    .eq("id", orderId)
-    .is("shiprocket_order_id", null);
-
   const { data: order } = await db.from("orders").select("*").eq("id", orderId).maybeSingle();
-  if (order) await pushToShiprocket(order);
+  if (!order) return;
+
+  const back = (packError?: string) => {
+    const base = from === "list" ? "/admin/orders" : `/admin/orders/${order.order_no}`;
+    const qs = packError
+      ? `?packError=${encodeURIComponent(packError)}&packOrder=${encodeURIComponent(order.order_no)}`
+      : "";
+    return `${base}${qs}`;
+  };
+
+  let failure: string | null = null;
+
+  if (order.status !== "paid") {
+    failure = "Only paid orders can be packed.";
+  } else {
+    const shipment = await createShipment(order);
+
+    if (!shipment.ok) {
+      failure = shipment.error;
+    } else {
+      const { error } = await db
+        .from("orders")
+        .update({ status: "packed" })
+        .eq("id", order.id)
+        .eq("status", "paid");
+
+      if (error) {
+        // Almost always: migration 0008 has not been run, so the database does not
+        // know the "packed" status yet. The shipment is already saved, so the next
+        // click skips Shiprocket and only retries this step.
+        console.error("[admin] could not mark packed:", order.order_no, error.message);
+        failure = "Shipment created, but the order could not be marked packed. Run migration 0008 and press Pack again.";
+      }
+    }
+  }
 
   revalidatePath("/admin/orders");
-  revalidatePath(`/admin/orders/${order?.order_no ?? ""}`);
+  revalidatePath(`/admin/orders/${order.order_no}`);
+  revalidatePath("/admin");
+
+  // redirect() throws, so it has to sit outside any try/catch.
+  redirect(back(failure ?? undefined));
 }
 
 /**
@@ -118,7 +153,7 @@ export async function refundOrder(form: FormData): Promise<void> {
 
   if (!order?.razorpay_payment_id) return;
   // Only money that actually moved can be returned.
-  if (!["paid", "shipped", "delivered", "cancelled"].includes(order.status)) return;
+  if (!["paid", "packed", "shipped", "delivered", "cancelled"].includes(order.status)) return;
 
   try {
     await refundPayment({
@@ -143,7 +178,7 @@ export async function setOrderStatus(form: FormData): Promise<void> {
   const status = String(form.get("status") ?? "").trim();
 
   // No "refunded": that one goes through refundOrder so money actually moves.
-  const ALLOWED: OrderStatus[] = ["paid", "shipped", "delivered", "cancelled"];
+  const ALLOWED: OrderStatus[] = ["paid", "packed", "shipped", "delivered", "cancelled"];
   if (!orderId || !ALLOWED.includes(status as OrderStatus)) return;
 
   await getSupabaseAdmin()

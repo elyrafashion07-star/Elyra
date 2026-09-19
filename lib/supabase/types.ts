@@ -97,6 +97,7 @@ export type ProfileRow = {
 export type OrderStatus =
   | "pending"
   | "paid"
+  | "packed"
   | "failed"
   | "cancelled"
   | "shipped"
@@ -131,7 +132,7 @@ export type OrderRow = {
   razorpay_order_id: string | null;
   razorpay_payment_id: string | null;
   paid_at: string | null;
-  /** Set the moment a Shiprocket push is claimed — see lib/orders/fulfil.ts. */
+  /** Set the moment a Shiprocket shipment is claimed by "Pack" — see lib/orders/fulfil.ts. */
   shipment_requested_at: string | null;
   shiprocket_order_id: string | null;
   shiprocket_shipment_id: string | null;

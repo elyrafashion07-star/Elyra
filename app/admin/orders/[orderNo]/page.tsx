@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { RefreshCw, Truck, Undo2 } from "lucide-react";
+import { AlertTriangle, PackageCheck, RefreshCw, Undo2 } from "lucide-react";
 import Container from "@/components/ui/Container";
-import { refreshTracking, refundOrder, retryShipment, setOrderStatus } from "@/app/admin/orders/actions";
+import { packOrder, refreshTracking, refundOrder, setOrderStatus } from "@/app/admin/orders/actions";
 import TrackingTimeline from "@/components/orders/TrackingTimeline";
 import { getTrackingEvents } from "@/lib/orders/tracking";
 import { formatPaise } from "@/lib/format";
@@ -16,14 +16,17 @@ export const metadata: Metadata = {
 
 // "refunded" is not here on purpose — it is reached through the Refund button,
 // which actually returns the money.
-const STATUSES = ["paid", "shipped", "delivered", "cancelled"];
+const STATUSES = ["paid", "packed", "shipped", "delivered", "cancelled"];
 
 export default async function AdminOrderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ orderNo: string }>;
+  searchParams: Promise<{ packError?: string }>;
 }) {
   const { orderNo } = await params;
+  const { packError } = await searchParams;
   const db = getSupabaseAdmin();
 
   const { data: order } = await db.from("orders").select("*").eq("order_no", orderNo).maybeSingle();
@@ -45,6 +48,32 @@ export default async function AdminOrderPage({
         {order.status} · {formatPaise(order.total_paise)} ·{" "}
         {new Date(order.created_at).toLocaleString("en-IN")}
       </p>
+
+      {packError ? (
+        <p
+          role="alert"
+          className="mt-6 flex items-start gap-2 border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-900"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          {packError}
+        </p>
+      ) : null}
+
+      {order.status === "paid" ? (
+        <form action={packOrder} className="mt-6 border border-amber-200 bg-amber-50 p-4">
+          <input type="hidden" name="order_id" value={order.id} />
+          <input type="hidden" name="from" value="order" />
+          <p className="text-[13px] text-amber-900">
+            Paid and waiting to be packed. Pressing Pack creates the order in Shiprocket.
+          </p>
+          <button
+            type="submit"
+            className="mt-3 flex items-center gap-2 bg-ink px-6 py-3 text-[11px] font-semibold tracking-[0.16em] uppercase text-cream transition-colors hover:bg-gold"
+          >
+            <PackageCheck className="h-4 w-4" /> Pack &amp; create Shiprocket order
+          </button>
+        </form>
+      ) : null}
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_340px]">
         <div>
@@ -82,18 +111,6 @@ export default async function AdminOrderPage({
           </dl>
 
           <div className="mt-5 flex flex-wrap gap-3">
-            {!order.shiprocket_order_id && order.status === "paid" ? (
-              <form action={retryShipment}>
-                <input type="hidden" name="order_id" value={order.id} />
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 bg-ink px-5 py-2.5 text-[11px] font-semibold tracking-[0.16em] uppercase text-cream transition-colors hover:bg-gold"
-                >
-                  <Truck className="h-3.5 w-3.5" /> Retry shipment
-                </button>
-              </form>
-            ) : null}
-
             {order.awb ? (
               <form action={refreshTracking}>
                 <input type="hidden" name="order_id" value={order.id} />
@@ -109,7 +126,7 @@ export default async function AdminOrderPage({
           </div>
 
           {order.razorpay_payment_id &&
-          ["paid", "shipped", "delivered", "cancelled"].includes(order.status) ? (
+          ["paid", "packed", "shipped", "delivered", "cancelled"].includes(order.status) ? (
             <form action={refundOrder} className="mt-10 border border-line p-4">
               <input type="hidden" name="order_id" value={order.id} />
               <h2 className="text-[11px] font-semibold tracking-[0.16em] uppercase">Refund</h2>

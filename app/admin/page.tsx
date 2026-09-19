@@ -21,16 +21,16 @@ export default async function AdminPage() {
   const [{ data: orders }, products] = await Promise.all([
     // Service-role, so this counts every customer's orders and not just the
     // admin's own — "read own orders" would otherwise scope it.
-    db.from("orders").select("status, total_paise, shiprocket_order_id"),
+    db.from("orders").select("status, total_paise"),
     loadCatalog(),
   ]);
 
   const all = orders ?? [];
   // Revenue is money actually taken: pending orders were never paid for, and
   // refunded ones were given back.
-  const earning = all.filter((o) => ["paid", "shipped", "delivered"].includes(o.status));
+  const earning = all.filter((o) => ["paid", "packed", "shipped", "delivered"].includes(o.status));
   const revenue = earning.reduce((sum, o) => sum + o.total_paise, 0);
-  const unshipped = all.filter((o) => o.status === "paid" && !o.shiprocket_order_id).length;
+  const toPack = all.filter((o) => o.status === "paid").length;
   const noPhotos = products.filter((p) => !p.images?.length).length;
 
   return (
@@ -40,14 +40,13 @@ export default async function AdminPage() {
         Signed in as {profile?.full_name || profile?.email}
       </p>
 
-      {unshipped ? (
+      {toPack ? (
         <Link
           href="/admin/orders"
           className="mt-6 flex items-start gap-2 border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900 transition-colors hover:border-amber-400"
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          {unshipped} paid order{unshipped === 1 ? "" : "s"} never reached Shiprocket — open Orders
-          to retry.
+          {toPack} order{toPack === 1 ? "" : "s"} waiting to be packed — open Orders and press Pack.
         </Link>
       ) : null}
 

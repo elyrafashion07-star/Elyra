@@ -39,7 +39,7 @@ Sahi hone par login confirm hoga aur available couriers + ETA + rate print honge
 |---|---|
 | Pin code delivery check (product page) | ✅ live |
 | Checkout par unserviceable pin code block | ✅ payment se pehle reject |
-| Paid order ka Shiprocket me push | ✅ `lib/orders/fulfil.ts` (fail ho to admin me "Retry shipment") |
+| Shiprocket me order banana | ✅ admin panel me **Pack** dabane par (payment par auto-push nahi) — `lib/orders/fulfil.ts` |
 | AWB / courier / status webhook | ✅ `POST /api/webhooks/courier-updates` |
 | `GET /api/shipping/serviceability` | ✅ public, rate-limited |
 | `GET /api/shipping/track?awb=` | ✅ sirf admin |

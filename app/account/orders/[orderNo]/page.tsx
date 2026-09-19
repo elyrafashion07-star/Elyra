@@ -23,7 +23,12 @@ const STATUS: Record<OrderStatus, { label: string; note: string; tone: string }>
   },
   paid: {
     label: "Confirmed",
-    note: "We have your payment. This ships within 24–48 hours.",
+    note: "We have your payment and are getting your order ready. It ships within 24–48 hours.",
+    tone: "text-green-700",
+  },
+  packed: {
+    label: "Packed",
+    note: "Your order is packed and waiting for the courier to pick it up.",
     tone: "text-green-700",
   },
   failed: {
@@ -40,7 +45,9 @@ const STATUS: Record<OrderStatus, { label: string; note: string; tone: string }>
 function StatusIcon({ status }: { status: OrderStatus }) {
   if (status === "pending") return <Clock className="h-5 w-5" />;
   if (status === "failed" || status === "cancelled") return <XCircle className="h-5 w-5" />;
-  if (status === "shipped" || status === "delivered") return <Package className="h-5 w-5" />;
+  if (status === "packed" || status === "shipped" || status === "delivered") {
+    return <Package className="h-5 w-5" />;
+  }
   return <CheckCircle2 className="h-5 w-5" />;
 }
 

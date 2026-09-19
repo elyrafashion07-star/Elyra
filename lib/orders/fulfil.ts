@@ -1,12 +1,15 @@
 /**
  * What happens after money moves.
  *
- * Two callers race to run this for every order: the browser, which gets the
+ * Two callers race to mark every order paid: the browser, which gets the
  * Razorpay callback first, and the webhook, which is the one that actually
  * matters because it arrives even if the customer closes the tab mid-payment.
  * Everything here is therefore written to be safe to run twice — guards live in
  * the WHERE clause, so the database decides the winner rather than a read
  * followed by a write.
+ *
+ * Shipping is a separate, deliberate step: an admin packs the order and that
+ * creates the Shiprocket shipment.
  */
 import "server-only";
 import { createOrder as createShiprocketOrder, isShiprocketConfigured } from "@/lib/shiprocket/client";
@@ -79,48 +82,72 @@ export async function markOrderFailed({
 }
 
 /**
- * Pushes a paid order to Shiprocket, at most once.
- *
- * A failure here is deliberately not propagated to the customer: their money has
- * already moved, and the order is on record. It leaves shipment_requested_at set
- * and the Shiprocket ids null, which is exactly the state to look for when
- * retrying by hand.
+ * How long a shipment claim is honoured before it is treated as abandoned. A
+ * claim is only held for the length of one Shiprocket call, so anything older
+ * belongs to a request that crashed or timed out and must not block a retry.
  */
-export async function pushToShiprocket(order: OrderRow): Promise<void> {
-  if (order.status !== "paid") return;
-  if (order.shiprocket_order_id) return;
+const CLAIM_TTL_MS = 2 * 60 * 1000;
+
+export type ShipmentResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Creates the Shiprocket shipment for a paid order, at most once. This is what
+ * the admin's "Pack" button runs — orders are no longer pushed automatically
+ * when they are paid, so nothing reaches Shiprocket until someone has actually
+ * packed the parcel.
+ *
+ * Unlike the old automatic push this reports failure to its caller: it is an
+ * admin standing at the screen, and "Shiprocket rejected it, here is why" is
+ * exactly what they need. On failure the claim is released, so pressing Pack
+ * again simply retries.
+ */
+export async function createShipment(order: OrderRow): Promise<ShipmentResult> {
+  if (order.status !== "paid") return { ok: false, error: "Only paid orders can be packed." };
+
+  // Already created earlier (an older auto-pushed order, or a retry after the
+  // status update failed) — nothing to send, just let the caller mark it packed.
+  if (order.shiprocket_order_id) return { ok: true };
 
   if (!isShiprocketConfigured) {
-    console.error("[checkout] Shiprocket not configured — order not shipped:", order.order_no);
-    return;
+    return { ok: false, error: "Shiprocket is not configured on this server." };
   }
 
   const db = getSupabaseAdmin();
 
-  // Claim the push. `is null` in the WHERE means exactly one concurrent caller
-  // gets a row back; everyone else sees nothing and returns.
+  // Claim the push. The WHERE means exactly one concurrent caller gets a row
+  // back; everyone else sees nothing and stands down.
+  const staleBefore = new Date(Date.now() - CLAIM_TTL_MS).toISOString();
   const { data: claimed } = await db
     .from("orders")
     .update({ shipment_requested_at: new Date().toISOString() })
     .eq("id", order.id)
-    .is("shipment_requested_at", null)
+    .is("shiprocket_order_id", null)
+    .or(`shipment_requested_at.is.null,shipment_requested_at.lt.${staleBefore}`)
     .select("id")
     .maybeSingle();
 
-  if (!claimed) return;
-
-  const { data: items } = await db
-    .from("order_items")
-    .select("*")
-    .eq("order_id", order.id);
-
-  if (!items?.length) {
-    console.error("[checkout] order has no items, not shipping:", order.order_no);
-    return;
+  if (!claimed) {
+    return { ok: false, error: "This order is already being sent to Shiprocket. Refresh in a moment." };
   }
 
+  /** Hands the claim back so the next click can try again. */
+  const release = () =>
+    db
+      .from("orders")
+      .update({ shipment_requested_at: null })
+      .eq("id", order.id)
+      .is("shiprocket_order_id", null);
+
+  const { data: items } = await db.from("order_items").select("*").eq("order_id", order.id);
+
+  if (!items?.length) {
+    await release();
+    return { ok: false, error: "This order has no items, so there is nothing to ship." };
+  }
+
+  let created: { order_id: number; shipment_id: number };
   try {
-    const result = await createShiprocketOrder({
+    created = await createShiprocketOrder({
       orderId: order.order_no,
       orderDate: shiprocketDate(order.created_at),
       billing: {
@@ -143,24 +170,42 @@ export async function pushToShiprocket(order: OrderRow): Promise<void> {
       paymentMethod: "Prepaid",
       subTotal: order.total_paise / 100,
     });
-
-    await db
-      .from("orders")
-      .update({
-        shiprocket_order_id: String(result.order_id),
-        shiprocket_shipment_id: String(result.shipment_id),
-      })
-      .eq("id", order.id);
   } catch (err) {
-    console.error(
-      "[checkout] Shiprocket push failed for",
-      order.order_no,
-      err instanceof Error ? err.message : err,
-    );
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[shipping] Shiprocket create failed for", order.order_no, message);
+    await release();
+    return { ok: false, error: `Shiprocket rejected the order: ${message}` };
   }
+
+  const { error } = await db
+    .from("orders")
+    .update({
+      shiprocket_order_id: String(created.order_id),
+      shiprocket_shipment_id: String(created.shipment_id),
+    })
+    .eq("id", order.id);
+
+  if (error) {
+    // The shipment exists in Shiprocket but we could not record it. The claim is
+    // deliberately left in place (it expires on its own) so a hurried second click
+    // does not create a duplicate — check Shiprocket before retrying.
+    console.error("[shipping] created in Shiprocket but not saved:", order.order_no, created, error.message);
+    return {
+      ok: false,
+      error: `Created in Shiprocket (order ${created.order_id}) but could not be saved here. Check Shiprocket before trying again.`,
+    };
+  }
+
+  return { ok: true };
 }
 
-/** Mark paid and ship, in that order. Safe to call from both the browser and the webhook. */
+/**
+ * What happens when money lands: mark the order paid, and stop there.
+ *
+ * The parcel is not sent to Shiprocket here any more — it waits in the admin
+ * panel until someone packs it (see createShipment). Safe to call from both the
+ * browser and the webhook.
+ */
 export async function fulfilOrder({
   orderId,
   paymentId,
@@ -168,7 +213,5 @@ export async function fulfilOrder({
   orderId: string;
   paymentId: string;
 }): Promise<OrderRow | null> {
-  const order = await markOrderPaid({ orderId, paymentId });
-  if (order) await pushToShiprocket(order);
-  return order;
+  return markOrderPaid({ orderId, paymentId });
 }
