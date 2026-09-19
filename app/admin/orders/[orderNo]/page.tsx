@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, PackageCheck, RefreshCw, Undo2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, PackageCheck, RefreshCw, RotateCw, Undo2 } from "lucide-react";
 import Container from "@/components/ui/Container";
-import { packOrder, refreshTracking, refundOrder, setOrderStatus } from "@/app/admin/orders/actions";
+import {
+  packOrder,
+  refreshTracking,
+  refundOrder,
+  setOrderStatus,
+  syncFromShiprocket,
+} from "@/app/admin/orders/actions";
 import TrackingTimeline from "@/components/orders/TrackingTimeline";
 import { getTrackingEvents } from "@/lib/orders/tracking";
 import { formatPaise } from "@/lib/format";
@@ -23,10 +29,10 @@ export default async function AdminOrderPage({
   searchParams,
 }: {
   params: Promise<{ orderNo: string }>;
-  searchParams: Promise<{ packError?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string }>;
 }) {
   const { orderNo } = await params;
-  const { packError } = await searchParams;
+  const { error: errorMessage, notice } = await searchParams;
   const db = getSupabaseAdmin();
 
   const { data: order } = await db.from("orders").select("*").eq("order_no", orderNo).maybeSingle();
@@ -49,13 +55,23 @@ export default async function AdminOrderPage({
         {new Date(order.created_at).toLocaleString("en-IN")}
       </p>
 
-      {packError ? (
+      {errorMessage ? (
         <p
           role="alert"
           className="mt-6 flex items-start gap-2 border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-900"
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          {packError}
+          {errorMessage}
+        </p>
+      ) : null}
+
+      {notice ? (
+        <p
+          role="status"
+          className="mt-6 flex items-start gap-2 border border-green-200 bg-green-50 px-4 py-3 text-[13px] text-green-900"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          {notice}
         </p>
       ) : null}
 
@@ -111,6 +127,18 @@ export default async function AdminOrderPage({
           </dl>
 
           <div className="mt-5 flex flex-wrap gap-3">
+            {order.shiprocket_order_id ? (
+              <form action={syncFromShiprocket}>
+                <input type="hidden" name="order_id" value={order.id} />
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 border border-line px-5 py-2.5 text-[11px] font-semibold tracking-[0.16em] uppercase transition-colors hover:border-gold hover:text-gold"
+                >
+                  <RotateCw className="h-3.5 w-3.5" /> Sync from Shiprocket
+                </button>
+              </form>
+            ) : null}
+
             {order.awb ? (
               <form action={refreshTracking}>
                 <input type="hidden" name="order_id" value={order.id} />

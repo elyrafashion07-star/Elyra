@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, PackageCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, PackageCheck } from "lucide-react";
 import Container from "@/components/ui/Container";
 import { packOrder } from "@/app/admin/orders/actions";
 import { formatPaise } from "@/lib/format";
@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ packError?: string; packOrder?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string; order?: string }>;
 }) {
-  const { packError, packOrder: failedOrderNo } = await searchParams;
+  const { error: errorMessage, notice, order: messageOrderNo } = await searchParams;
 
   // Service-role: an admin sees every order, and the "read own orders" policy
   // would otherwise scope this to the admin's own purchases.
@@ -35,16 +35,26 @@ export default async function AdminOrdersPage({
       <h1 className="text-3xl tracking-[0.04em] uppercase sm:text-4xl">Orders</h1>
       <p className="mt-2 text-sm text-muted">{orders?.length ?? 0} most recent</p>
 
-      {packError ? (
+      {errorMessage ? (
         <p
           role="alert"
           className="mt-6 flex items-start gap-2 border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-900"
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            {failedOrderNo ? <strong>{failedOrderNo}: </strong> : null}
-            {packError}
+            {messageOrderNo ? <strong>{messageOrderNo}: </strong> : null}
+            {errorMessage}
           </span>
+        </p>
+      ) : null}
+
+      {notice ? (
+        <p
+          role="status"
+          className="mt-6 flex items-start gap-2 border border-green-200 bg-green-50 px-4 py-3 text-[13px] text-green-900"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          {notice}
         </p>
       ) : null}
 

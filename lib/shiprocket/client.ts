@@ -216,6 +216,56 @@ export async function trackAwb(awb: string): Promise<TrackingResult> {
 
 // ── orders ─────────────────────────────────────────────────────────────────
 
+export type ShiprocketOrderInfo = {
+  /** Shiprocket's own order status, e.g. "NEW", "READY TO SHIP", "CANCELED". */
+  status: string | null;
+  awb: string | null;
+  courier: string | null;
+};
+
+function text(value: unknown): string | null {
+  if (typeof value === "number") return String(value);
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+/**
+ * Reads an order back from Shiprocket by the numeric id we stored when creating
+ * it. This is the pull side of the webhook: it works even when no callback ever
+ * arrived (Shiprocket does not always send one for an order cancelled before a
+ * courier was assigned).
+ *
+ * The response shape varies — `shipments` is an object in some responses and a
+ * list in others, and the AWB can sit in either place — so every field is read
+ * defensively and comes back null rather than throwing.
+ */
+export async function getOrder(shiprocketOrderId: string): Promise<ShiprocketOrderInfo> {
+  const body = await request<{ data?: Record<string, unknown> }>(
+    `/orders/show/${encodeURIComponent(shiprocketOrderId)}`,
+  );
+
+  const data = body.data ?? {};
+  const shipments = data.shipments;
+  const shipment = ((Array.isArray(shipments) ? shipments[0] : shipments) ?? {}) as Record<string, unknown>;
+  const awbData = (data.awb_data ?? {}) as Record<string, unknown>;
+
+  return {
+    status: text(data.status),
+    awb: text(shipment.awb) ?? text(awbData.awb),
+    courier: text(shipment.courier) ?? text(awbData.courier_name) ?? text(awbData.courier),
+  };
+}
+
+/**
+ * Cancels orders in Shiprocket. Shiprocket refuses once a parcel is out with the
+ * courier, so callers should treat a failure as "cancel it in their panel".
+ */
+export async function cancelOrders(shiprocketOrderIds: number[]): Promise<void> {
+  await request<unknown>(`/orders/cancel`, {
+    method: "POST",
+    body: JSON.stringify({ ids: shiprocketOrderIds }),
+  });
+}
+
 export type ShiprocketOrderInput = {
   orderId: string;
   orderDate: string; // "YYYY-MM-DD HH:mm"
