@@ -174,7 +174,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> Easy 7-day returns and free size exchange
             </li>
             <li className="flex items-start gap-2">
-              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> BIS hallmarked · certificate of authenticity included
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gold" /> Quality checked before dispatch
             </li>
           </ul>
 

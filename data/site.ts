@@ -2,13 +2,13 @@ export const site = {
   name: "Elyrafashion",
   /** Display lockup — "ELYRA" in ink, "Fashion" in rose-gold, as in the logo artwork. */
   wordmark: { head: "ELYRA", tail: "Fashion" },
-  tagline: "925 Sterling Silver Jewellery",
+  tagline: "Fashion Jewellery",
   phone: "+91 92176 20575",
   phoneHref: "tel:+919217620575",
   whatsapp: "919217620575",
   email: "elyrafashion07@gmail.com",
   about:
-    "At Elyrafashion, we believe jewellery is more than adornment — it is an extension of who you are. Every piece is thoughtfully handcrafted in 925 sterling silver to celebrate individuality, elevate everyday style, and honour the moments that make life meaningful.",
+    "At Elyrafashion, we believe jewellery is more than adornment — it is an extension of who you are. Every piece is thoughtfully designed as artificial fashion jewellery to celebrate individuality, elevate everyday style, and honour the moments that make life meaningful.",
   // Share links carry per-visitor tracking parameters (igsh, mibextid, rdid…)
   // that mean nothing to anyone else — these are the plain canonical URLs.
   instagram: "https://www.instagram.com/elyrafashion.in",
@@ -19,15 +19,15 @@ export const site = {
 export const announcements = [
   "🚚 FREE SHIPPING AVAILABLE ON ALL ORDERS",
   "💳 Secure Online Payments  |  5% Flat Off on First Order",
-  "✨ 925 Sterling Silver  |  Certified  |  Easy 7-Day Returns",
+  "✨ Artificial Fashion Jewellery  |  Quality Checked  |  Easy 7-Day Returns",
 ];
 
 export const trustStrip = [
-  { label: "925 Sterling Silver", icon: "silver" },
+  { label: "Fashion Jewellery", icon: "jewellery" },
   { label: "Free Shipping", icon: "shipping" },
   { label: "Secure Payments", icon: "payments" },
   { label: "Easy 7-Day Returns", icon: "returns" },
-  { label: "Certified", icon: "certified" },
+  { label: "Quality Checked", icon: "certified" },
 ] as const;
 
 export const whyUs = [
@@ -37,8 +37,8 @@ export const whyUs = [
     icon: "truck",
   },
   {
-    title: "BIS CERTIFIED",
-    text: "Every product is BIS hallmarked 925 sterling silver, tested for purity.",
+    title: "QUALITY CHECKED",
+    text: "Every piece is inspected for finish, clasp strength and stone setting before it is packed.",
     icon: "badge",
   },
   {
@@ -54,7 +54,7 @@ export const whyUs = [
 ];
 
 export const footerBadges = [
-  "100% Authentic Silver",
+  "Quality Checked",
   "UPI · Cards · Net Banking",
   "Secure Payments",
   "Easy Returns",

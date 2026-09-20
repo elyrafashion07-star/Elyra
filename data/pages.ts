@@ -10,26 +10,26 @@ export const infoPages: StaticPage[] = [
     slug: "about-us",
     title: "About Us",
     intro:
-      "Elyrafashion is a 925 sterling silver jewellery studio built on one idea — that fine silver should be worn, not saved for occasions.",
+      "Elyrafashion is an artificial fashion jewellery brand built on one idea — that beautiful jewellery should be worn every day, not saved for occasions.",
     sections: [
       {
         heading: "Our Story",
         body: [
-          "Elyrafashion began with a small workbench and a stubborn belief: that everyday jewellery deserves the same care as heirloom pieces. What started as a handful of designs has grown into a full collection of rings, chains, anklets, pendants and men's silver — each one hallmarked, hand-finished and made to be worn hard.",
-          "We work only in 925 sterling silver. Not plated brass, not alloy. Every batch is BIS hallmarked before it leaves our workshop, and every order ships with a certificate of authenticity.",
+          "Elyrafashion began with a small workbench and a stubborn belief: that everyday jewellery deserves the same care as heirloom pieces. What started as a handful of designs has grown into a full collection of rings, chains, anklets, pendants and men's accessories — each one hand-finished and made to be worn often.",
+          "Our jewellery is artificial (imitation) fashion jewellery — it is not made of precious metal. Every batch is quality checked before it leaves our workshop.",
         ],
       },
       {
         heading: "How We Make It",
         body: [
-          "Designs are drawn in-house, cast in small batches, then hand-finished by karigars who have been working silver for decades. Stones are set by hand. Every piece is polished, checked and weighed before packing.",
-          "Small batches mean we can keep quality tight and prices honest — you are paying for the silver and the craft, not for a long retail chain.",
+          "Designs are drawn in-house, cast in small batches, then hand-finished by skilled artisans. Stones are set by hand. Every piece is polished, checked and weighed before packing.",
+          "Small batches mean we can keep quality tight and prices honest — you are paying for the design and the craft, not for a long retail chain.",
         ],
       },
       {
         heading: "What We Promise",
         body: [
-          "BIS hallmarked 925 sterling silver on every piece. Free shipping across India. Secure online payments — UPI, cards, net banking and wallets. Easy 7-day returns, no questions asked. And a WhatsApp line that an actual human answers.",
+          "Quality-checked artificial jewellery on every piece. Free shipping across India. Secure online payments — UPI, cards, net banking and wallets. Easy 7-day returns, no questions asked. And a WhatsApp line that an actual human answers.",
         ],
       },
     ],
@@ -58,48 +58,48 @@ export const infoPages: StaticPage[] = [
   {
     slug: "jewellery-care",
     title: "Jewellery Care",
-    intro: "Sterling silver is durable, but it likes a little attention. Here is how to keep yours bright.",
+    intro: "Fashion jewellery lasts longer with a little attention. Here is how to keep yours bright.",
     sections: [
       {
         heading: "Everyday Habits",
         body: [
-          "Put jewellery on last — after perfume, lotion and hairspray. Take it off first, before swimming, showering or the gym. Chlorine and salt water dull silver faster than anything else.",
-          "Sweat and humidity cause tarnish. Wipe pieces with a soft dry cloth after wearing.",
+          "Put jewellery on last — after perfume, lotion and hairspray. Take it off first, before swimming, showering or the gym. Chlorine and salt water dull the finish faster than anything else.",
+          "Sweat and humidity can dull the finish. Wipe pieces with a soft dry cloth after wearing.",
         ],
       },
       {
         heading: "Cleaning",
         body: [
-          "For light tarnish, use the polishing cloth included with your order. Rub gently in straight lines, not circles.",
-          "For chains and textured pieces, use a drop of mild dish soap in warm water, a soft toothbrush, then rinse and pat dry completely. Never use toothpaste or baking soda on plated or stone-set pieces.",
+          "For light dullness, wipe gently with a soft dry cloth.",
+          "For chains and textured pieces, use a drop of mild dish soap in warm water, a soft toothbrush, then rinse and pat dry completely. Never use toothpaste, baking soda or polish on plated or stone-set pieces.",
         ],
       },
       {
         heading: "Storage",
         body: [
           "Store each piece separately in the pouch it arrived in, away from air and light. An anti-tarnish strip in your box buys you months.",
-          "Gold-plated silver should never be scrubbed — wipe only, and avoid polishing cloths, which strip plating.",
+          "Plated pieces should never be scrubbed — wipe only, and avoid polishing cloths, which strip the finish.",
         ],
       },
     ],
   },
   {
-    slug: "certificate-of-authenticity",
-    title: "Certificate of Authenticity",
+    slug: "quality-promise",
+    title: "Our Quality Promise",
     intro:
-      "Every Elyrafashion piece ships with a certificate confirming its purity, weight and hallmark. Here is what that means.",
+      "Every Elyrafashion piece is checked before it ships. Here is what that means.",
     sections: [
       {
-        heading: "What It Certifies",
+        heading: "What We Check",
         body: [
-          "The certificate records the metal purity (925 sterling silver), the piece weight, the stone type where applicable, and the BIS hallmark reference.",
-          "It is your proof of purity for resale, insurance or exchange — keep it with the piece.",
+          "Each piece is checked for finish, clasp strength, stone setting and overall look. Our jewellery is artificial fashion jewellery and is not sold as precious metal.",
+          "Keep your order confirmation — it is what we need for an exchange or return.",
         ],
       },
       {
-        heading: "How We Test",
+        heading: "How We Inspect",
         body: [
-          "Every batch is assayed before it is hallmarked. Silver that does not meet the 92.5% threshold does not get packed, full stop.",
+          "Every batch is inspected before it is packed. Pieces that do not meet our finish standard do not get packed, full stop.",
           "Pieces are then inspected individually for setting security, clasp strength and finish before they are boxed.",
         ],
       },
@@ -192,7 +192,7 @@ export const policyPages: StaticPage[] = [
       {
         heading: "Eligibility",
         body: [
-          "Returns are accepted within 7 days of delivery, on unworn pieces in original packaging with the certificate of authenticity included.",
+          "Returns are accepted within 7 days of delivery, on unworn pieces in original packaging with all original tags included.",
           "Customised, engraved and pierced items (including earrings, for hygiene reasons) cannot be returned unless they arrived damaged.",
         ],
       },
@@ -226,7 +226,7 @@ export const policyPages: StaticPage[] = [
       {
         heading: "Product Representation",
         body: [
-          "Silver is a natural material and hand-finishing means small variations in polish, oxidation and stone tone are normal. Screen colours may differ slightly from the piece in hand.",
+          "Hand-finishing means small variations in polish and stone tone are normal. Screen colours may differ slightly from the piece in hand.",
           "Weights listed are nominal and may vary within a small tolerance.",
         ],
       },

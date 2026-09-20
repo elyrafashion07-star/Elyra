@@ -51,7 +51,7 @@ export const footerQuickLinks: NavItem[] = [
   { label: "About Us", href: "/pages/about-us" },
   { label: "Contact", href: "/pages/contact-us" },
   { label: "Track My Order", href: "/pages/track-order" },
-  { label: "Certificate of Authenticity", href: "/pages/certificate-of-authenticity" },
+  { label: "Our Quality Promise", href: "/pages/quality-promise" },
   { label: "Jewellery Care", href: "/pages/jewellery-care" },
   { label: "Privacy Policy", href: "/policies/privacy-policy" },
   { label: "Shipping Policy", href: "/policies/shipping-policy" },

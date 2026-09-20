@@ -18,13 +18,13 @@ const base = {
   "aria-hidden": true,
 };
 
-/** 925 Sterling Silver — a hallmark stamp, rings around a solid centre. */
-export function SilverIcon({ className = "" }: IconProps) {
+/** Fashion Jewellery — a cut gem: crown, girdle line and facets. */
+export function JewelleryIcon({ className = "" }: IconProps) {
   return (
     <svg {...base} className={className}>
-      <circle cx="12" cy="12" r="9.25" />
-      <circle cx="12" cy="12" r="5.5" />
-      <circle cx="12" cy="12" r="1.75" fill="currentColor" stroke="none" />
+      <path d="M6.25 3.75h11.5l4 5.25L12 20.75 2.25 9z" />
+      <path d="M2.25 9h19.5" />
+      <path d="M8.9 9 12 3.75 15.1 9 12 20.75z" />
     </svg>
   );
 }
@@ -63,7 +63,7 @@ export function ReturnsIcon({ className = "" }: IconProps) {
   );
 }
 
-/** Certified — a shield with a check, for hallmarked purity. */
+/** Certified — a shield with a check, for a quality check. */
 export function CertifiedIcon({ className = "" }: IconProps) {
   return (
     <svg {...base} className={className}>
@@ -75,7 +75,7 @@ export function CertifiedIcon({ className = "" }: IconProps) {
 
 /** Keys match the `icon` field on `trustStrip` in data/site.ts. */
 export const trustIcons = {
-  silver: SilverIcon,
+  jewellery: JewelleryIcon,
   shipping: ShippingIcon,
   payments: PaymentsIcon,
   returns: ReturnsIcon,

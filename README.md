@@ -1,4 +1,4 @@
-# Elyrafashion — 925 Sterling Silver Jewellery Store
+# Elyrafashion — Artificial Fashion Jewellery Store
 
 Next.js 15 (App Router) + React 19 + TypeScript + Tailwind v4 e-commerce front end,
 structured after `thesilverora.com`.
@@ -32,7 +32,7 @@ npm run lint
 | 9 | Shop by Gender (2 banners) | [ShopByGender](components/home/ShopByGender.tsx) |
 | 10 | The Gifting Edit (6 tiles) | [GiftingEdit](components/home/GiftingEdit.tsx) |
 | 11 | Video section | [VideoSection](components/home/VideoSection.tsx) |
-| 12 | Certificate of Authenticity | [AuthenticityBanner](components/home/AuthenticityBanner.tsx) |
+| 12 | Our Quality Promise | [AuthenticityBanner](components/home/AuthenticityBanner.tsx) |
 | 13 | Newsletter | [Newsletter](components/home/Newsletter.tsx) |
 | — | Footer · mobile toolbar · WhatsApp float · cart drawer | `components/layout/` |
 

@@ -31,8 +31,8 @@ export const metadata: Metadata = {
     template: `%s | ${site.name}`,
   },
   description:
-    "Shop BIS-certified 925 sterling silver jewellery — rings, anklets, bracelets, pendants, rakhis and men's silver. Free shipping across India, secure online payments, easy 7-day returns.",
-  keywords: ["925 sterling silver", "silver jewellery India", "anklets", "rakhi", "silver rings"],
+    "Shop artificial fashion jewellery — rings, anklets, bracelets, pendants, rakhis and men's accessories. Free shipping across India, secure online payments, easy 7-day returns.",
+  keywords: ["artificial jewellery", "fashion jewellery India", "anklets", "rakhi", "rings"],
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

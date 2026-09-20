@@ -14,7 +14,7 @@ export default async function ShopByOccasion() {
       <Container>
         <SectionHeading
           title="Shop by Occasion"
-          subtitle="Whatever you are celebrating, there is a piece of silver that fits the moment."
+          subtitle="Whatever you are celebrating, there is a piece that fits the moment."
         />
         <div className="mt-9 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
           {occasions.map((c) => (

@@ -13,7 +13,7 @@ export default async function TrendingProducts() {
       <Container>
         <SectionHeading
           title={`Top ${TRENDING_LIMIT} Trending Products`}
-          subtitle="Elyrafashion brings you trend-setting sterling silver jewellery designed to enhance confidence, style and sophistication."
+          subtitle="Elyrafashion brings you trend-setting artificial fashion jewellery designed to enhance confidence, style and sophistication."
         />
         <div className="mt-9">
           <ProductSlider products={products} />

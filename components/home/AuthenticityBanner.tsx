@@ -3,8 +3,8 @@ import Container from "@/components/ui/Container";
 import FixedImage from "@/components/ui/FixedImage";
 
 const points = [
-  "Metal purity, weight and stone type printed on every certificate.",
-  "BIS hallmarked 925 sterling silver, assayed batch by batch.",
+  "Finish, clasp strength and stone setting checked on every piece.",
+  "Artificial fashion jewellery, inspected batch by batch.",
   "Inspected for setting security and finish before it is boxed.",
 ];
 
@@ -17,22 +17,21 @@ export default function AuthenticityBanner() {
           <div className="mx-auto w-full max-w-[500px]">
             <FixedImage
               slot="authenticityBanner"
-              alt="Elyrafashion certificate of authenticity"
-              label="Certificate banner"
+              alt="Elyrafashion quality promise"
+              label="Quality banner"
               className="rounded-xl border border-line"
             />
           </div>
 
           <div>
             <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-gold">
-              Guaranteed Purity
+              Quality Checked
             </p>
-            <h2 className="mt-3 text-3xl leading-tight lg:text-[38px]">Certificate of Authenticity</h2>
+            <h2 className="mt-3 text-3xl leading-tight lg:text-[38px]">Our Quality Promise</h2>
             <p className="mt-4 text-sm leading-relaxed text-ink-soft sm:text-[15px]">
-              Our certificate ensures every Elyrafashion piece you receive is crafted from genuine,
-              high-quality 925 sterling silver. Each certificate verifies the purity and standard of
-              the metal, giving you complete confidence in your purchase — and a record you can keep
-              for resale, insurance or exchange.
+              Every Elyrafashion piece is artificial fashion jewellery, checked for finish and
+              construction before it is packed, so what reaches you looks as good as it does on
+              the page.
             </p>
             <ul className="mt-6 space-y-3">
               {points.map((p) => (
@@ -43,7 +42,7 @@ export default function AuthenticityBanner() {
               ))}
             </ul>
             <Link
-              href="/pages/certificate-of-authenticity"
+              href="/pages/quality-promise"
               className="mt-7 inline-block bg-ink px-8 py-3 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold"
             >
               Learn More

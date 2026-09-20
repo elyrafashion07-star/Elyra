@@ -166,7 +166,7 @@ export default function ProductForm({
             name="material"
             label="Material"
             defaultValue={value("material", product?.material)}
-            hint="e.g. 925 Sterling Silver, Matte finish"
+            hint="e.g. Artificial jewellery, Matte finish"
           />
           <Field
             name="weight"
