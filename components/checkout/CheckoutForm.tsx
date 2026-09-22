@@ -385,12 +385,6 @@ export default function CheckoutForm({
 
         <dl className="mt-4 space-y-2 text-[13px]">
           <Row label="Subtotal" value={priced ? formatPaise(priced.subtotalPaise) : formatPrice(subtotal)} />
-          {priced && priced.discountPaise > 0 ? (
-            <Row
-              label={`First-order discount (${priced.discountPercent}%)`}
-              value={`− ${formatPaise(priced.discountPaise)}`}
-            />
-          ) : null}
           <Row label="Shipping" value="Free" />
           <div className="flex justify-between border-t border-line pt-3 text-[15px] font-semibold">
             <dt>Total</dt>

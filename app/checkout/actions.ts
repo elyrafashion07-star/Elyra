@@ -53,7 +53,6 @@ export type QuoteResult =
       }[];
       subtotalPaise: number;
       discountPaise: number;
-      discountPercent: number;
       shippingPaise: number;
       totalPaise: number;
     }
@@ -132,18 +131,17 @@ async function codDeliveryError(pincode: string): Promise<string | null> {
 /**
  * The authoritative price for the cart, shown on the checkout page before the
  * customer pays. The cart in localStorage carries the price from when the item
- * was added — this is what will really be charged, including any first-order
- * discount, so the button never promises a different number to the receipt.
+ * was added — this is what will really be charged, so the button never
+ * promises a different number to the receipt.
  */
 export async function quoteCheckout(lines: CartLineInput[]): Promise<QuoteResult> {
   const user = await getUser();
   if (!user) return { ok: false, error: "Please sign in to place an order." };
 
-  const priced = await priceCart(lines, { userId: user.id });
+  const priced = await priceCart(lines);
   if (!priced.ok) return { ok: false, error: priced.error };
 
-  const { items, subtotalPaise, shippingPaise, discountPaise, discountPercent, totalPaise } =
-    priced.cart;
+  const { items, subtotalPaise, shippingPaise, discountPaise, totalPaise } = priced.cart;
 
   return {
     ok: true,
@@ -158,7 +156,6 @@ export async function quoteCheckout(lines: CartLineInput[]): Promise<QuoteResult
     subtotalPaise,
     shippingPaise,
     discountPaise,
-    discountPercent,
     totalPaise,
   };
 }
@@ -191,7 +188,7 @@ export async function startCheckout({
   if (invalid) return { ok: false, error: invalid };
 
   // Prices come from the database, never from the cart the browser sent.
-  const priced = await priceCart(lines, { userId: user.id });
+  const priced = await priceCart(lines);
   if (!priced.ok) return { ok: false, error: priced.error };
 
   const undeliverable = await deliveryError(address.pincode.trim());
@@ -343,7 +340,7 @@ export async function startCodOrder({
   const invalid = validate(address);
   if (invalid) return { ok: false, error: invalid };
 
-  const priced = await priceCart(lines, { userId: user.id });
+  const priced = await priceCart(lines);
   if (!priced.ok) return { ok: false, error: priced.error };
 
   const undeliverable = await codDeliveryError(address.pincode.trim());

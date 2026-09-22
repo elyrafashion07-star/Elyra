@@ -146,7 +146,7 @@ Right side: Search · Login/Register · Wishlist · Cart (count badge)
 
 | # | Section | Layout |
 |---|---|---|
-| 4.0 | Announcement bar | Left: 📞 phone + ✉ email · Right: auto-scrolling ticker (Free Shipping / COD / 5% off first order / 7-day returns) |
+| 4.0 | Announcement bar | Left: 📞 phone + ✉ email · Right: auto-scrolling ticker (Free Shipping / COD available / 7-day returns) |
 | 4.1 | **Hero Slider** | Full-width autoplay, 3–5 slides, dots. Desktop + mobile alag image |
 | 4.2 | **Trust Strip** | 5 icons ek row me: 925 Sterling Silver · Free Shipping · COD Available · Easy 7-Day Returns · Certified |
 | 4.3 | **Top 15 Trending Products** | Heading + subtitle, horizontal slider, 5 cards/row desktop · 2 mobile |

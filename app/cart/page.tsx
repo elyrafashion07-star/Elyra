@@ -122,7 +122,7 @@ export default function CartPage() {
                 <dd className="font-semibold">{formatPrice(subtotal)}</dd>
               </div>
             </dl>
-            <p className="mt-2 text-[11px] text-muted">Inclusive of all taxes. Any first-order discount is applied at checkout.</p>
+            <p className="mt-2 text-[11px] text-muted">Inclusive of all taxes.</p>
 
             {/* Signed-out shoppers get bounced to the login form by middleware
                 and land back here afterwards, so no check is needed up front. */}

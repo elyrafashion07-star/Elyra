@@ -18,7 +18,7 @@ export const site = {
 
 export const announcements = [
   "🚚 FREE SHIPPING AVAILABLE ON ALL ORDERS",
-  "💳 Secure Online Payments  |  5% Flat Off on First Order",
+  "💳 Secure Online Payments  |  Cash on Delivery Available",
   "✨ Artificial Fashion Jewellery  |  Quality Checked  |  Easy 7-Day Returns",
 ];
 

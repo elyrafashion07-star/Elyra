@@ -24,10 +24,14 @@ export type PricedLine = Omit<OrderItemRow, "id" | "order_id">;
 
 export type PricedCart = {
   items: PricedLine[];
-  /** Set when the first-order discount was applied. */
-  discountPercent: number;
   subtotalPaise: number;
   shippingPaise: number;
+  /**
+   * No discount is applied today — the first-order 5% offer was removed. Kept
+   * as a field (always 0) rather than deleted outright: `orders.discount_paise`
+   * is a real column, the total-check constraint in 0004_orders.sql is written
+   * against it, and a future coupon or promo code would want the same slot.
+   */
   discountPaise: number;
   totalPaise: number;
 };
@@ -39,42 +43,13 @@ export type PricedCart = {
  */
 export const SHIPPING_PAISE = 0;
 
-/**
- * The announcement bar promises "5% flat off on first order". Kept here so the
- * banner and the maths cannot drift apart: change one, change the other.
- */
-export const FIRST_ORDER_DISCOUNT_PERCENT = 5;
-
 /** A cart line above this is far more likely to be a mistake than a sale. */
 const MAX_QTY_PER_LINE = 10;
 const MAX_LINES = 50;
 
 export type PricingResult = { ok: true; cart: PricedCart } | { ok: false; error: string };
 
-/**
- * A customer's first order is one where nothing of theirs has ever been paid for.
- * `paid_at` rather than status, so a refunded or cancelled purchase still counts
- * as having ordered, while abandoned and failed attempts do not use the offer up.
- */
-async function isFirstOrder(userId: string): Promise<boolean> {
-  const { count, error } = await getSupabaseAdmin()
-    .from("orders")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .not("paid_at", "is", null);
-
-  // If we cannot tell, do not hand out a discount we cannot justify.
-  if (error) {
-    console.error("[checkout] first-order lookup failed:", error.message);
-    return false;
-  }
-  return (count ?? 0) === 0;
-}
-
-export async function priceCart(
-  lines: CartLineInput[],
-  { userId }: { userId?: string } = {},
-): Promise<PricingResult> {
+export async function priceCart(lines: CartLineInput[]): Promise<PricingResult> {
   if (!Array.isArray(lines) || lines.length === 0) {
     return { ok: false, error: "Your cart is empty." };
   }
@@ -147,21 +122,14 @@ export async function priceCart(
 
   const subtotalPaise = items.reduce((sum, i) => sum + i.line_total_paise, 0);
 
-  const eligible = userId ? await isFirstOrder(userId) : false;
-  const discountPercent = eligible ? FIRST_ORDER_DISCOUNT_PERCENT : 0;
-  // Integer paise, rounded — the orders_total_check constraint in 0004_orders.sql
-  // is exact arithmetic on these integers.
-  const discountPaise = Math.round((subtotalPaise * discountPercent) / 100);
-
   return {
     ok: true,
     cart: {
       items,
-      discountPercent,
       subtotalPaise,
       shippingPaise: SHIPPING_PAISE,
-      discountPaise,
-      totalPaise: subtotalPaise + SHIPPING_PAISE - discountPaise,
+      discountPaise: 0,
+      totalPaise: subtotalPaise + SHIPPING_PAISE,
     },
   };
 }
