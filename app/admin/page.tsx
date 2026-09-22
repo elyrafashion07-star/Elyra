@@ -21,16 +21,17 @@ export default async function AdminPage() {
   const [{ data: orders }, products] = await Promise.all([
     // Service-role, so this counts every customer's orders and not just the
     // admin's own — "read own orders" would otherwise scope it.
-    db.from("orders").select("status, total_paise"),
+    db.from("orders").select("status, total_paise, paid_at"),
     loadCatalog(),
   ]);
 
   const all = orders ?? [];
-  // Revenue is money actually taken: pending orders were never paid for, and
-  // refunded ones were given back.
-  const earning = all.filter((o) => ["paid", "packed", "shipped", "delivered"].includes(o.status));
+  // Revenue is money actually taken: pending orders were never paid for,
+  // refunded ones were given back, and a COD order only really counts once
+  // `paid_at` is set at delivery — packed or shipped is not cash in hand yet.
+  const earning = all.filter((o) => ["paid", "packed", "shipped", "delivered"].includes(o.status) && o.paid_at);
   const revenue = earning.reduce((sum, o) => sum + o.total_paise, 0);
-  const toPack = all.filter((o) => o.status === "paid").length;
+  const toPack = all.filter((o) => o.status === "paid" || o.status === "confirmed").length;
   const noPhotos = products.filter((p) => !p.images?.length).length;
 
   return (

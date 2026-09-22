@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 // "refunded" is not here on purpose — it is reached through the Refund button,
 // which actually returns the money.
-const STATUSES = ["paid", "packed", "shipped", "delivered", "cancelled"];
+const STATUSES = ["confirmed", "paid", "packed", "shipped", "delivered", "cancelled"];
 
 export default async function AdminOrderPage({
   params,
@@ -51,8 +51,8 @@ export default async function AdminOrderPage({
 
       <h1 className="mt-3 text-3xl tracking-[0.04em] uppercase sm:text-4xl">{order.order_no}</h1>
       <p className="mt-2 text-sm text-muted">
-        {order.status} · {formatPaise(order.total_paise)} ·{" "}
-        {new Date(order.created_at).toLocaleString("en-IN")}
+        {order.status} · {order.payment_method === "cod" ? "Cash on Delivery" : "Prepaid"} ·{" "}
+        {formatPaise(order.total_paise)} · {new Date(order.created_at).toLocaleString("en-IN")}
       </p>
 
       {errorMessage ? (
@@ -75,12 +75,14 @@ export default async function AdminOrderPage({
         </p>
       ) : null}
 
-      {order.status === "paid" ? (
+      {order.status === "paid" || order.status === "confirmed" ? (
         <form action={packOrder} className="mt-6 border border-amber-200 bg-amber-50 p-4">
           <input type="hidden" name="order_id" value={order.id} />
           <input type="hidden" name="from" value="order" />
           <p className="text-[13px] text-amber-900">
-            Paid and waiting to be packed. Pressing Pack creates the order in Shiprocket.
+            {order.payment_method === "cod"
+              ? `Cash on Delivery — collect ${formatPaise(order.total_paise)} on delivery. Pressing Pack creates the order in Shiprocket.`
+              : "Paid and waiting to be packed. Pressing Pack creates the order in Shiprocket."}
           </p>
           <button
             type="submit"
@@ -109,10 +111,15 @@ export default async function AdminOrderPage({
 
           <h2 className="mt-10 text-[11px] font-semibold tracking-[0.16em] uppercase">Payment</h2>
           <dl className="mt-3 space-y-1.5 text-[13px] text-ink-soft">
-            <Row label="Razorpay order" value={order.razorpay_order_id} />
-            <Row label="Razorpay payment" value={order.razorpay_payment_id} />
+            <Row label="Method" value={order.payment_method === "cod" ? "Cash on Delivery" : "Prepaid (Razorpay)"} />
+            {order.payment_method === "cod" ? null : (
+              <>
+                <Row label="Razorpay order" value={order.razorpay_order_id} />
+                <Row label="Razorpay payment" value={order.razorpay_payment_id} />
+              </>
+            )}
             <Row
-              label="Paid at"
+              label={order.payment_method === "cod" ? "Cash collected at" : "Paid at"}
               value={order.paid_at ? new Date(order.paid_at).toLocaleString("en-IN") : null}
             />
             <Row label="Failure" value={order.failure_reason} />

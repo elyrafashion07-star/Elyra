@@ -96,6 +96,7 @@ export type ProfileRow = {
 
 export type OrderStatus =
   | "pending"
+  | "confirmed"
   | "paid"
   | "packed"
   | "failed"
@@ -103,6 +104,9 @@ export type OrderStatus =
   | "shipped"
   | "delivered"
   | "refunded";
+
+/** "cod" orders skip Razorpay and go straight to "confirmed" — see 0011_cod.sql. */
+export type PaymentMethod = "prepaid" | "cod";
 
 /**
  * See supabase/migrations/0004_orders.sql.
@@ -115,6 +119,7 @@ export type OrderRow = {
   order_no: string;
   user_id: string;
   status: OrderStatus;
+  payment_method: PaymentMethod;
   subtotal_paise: number;
   shipping_paise: number;
   discount_paise: number;

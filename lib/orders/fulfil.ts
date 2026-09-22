@@ -102,7 +102,11 @@ export type ShipmentResult = { ok: true } | { ok: false; error: string };
  * again simply retries.
  */
 export async function createShipment(order: OrderRow): Promise<ShipmentResult> {
-  if (order.status !== "paid") return { ok: false, error: "Only paid orders can be packed." };
+  // A "confirmed" order is a COD order — nothing was collected online, but
+  // there is nothing to wait on either, so it packs the same as a paid one.
+  if (order.status !== "paid" && order.status !== "confirmed") {
+    return { ok: false, error: "Only paid or confirmed orders can be packed." };
+  }
 
   // Already created earlier (an older auto-pushed order, or a retry after the
   // status update failed) — nothing to send, just let the caller mark it packed.
@@ -167,7 +171,7 @@ export async function createShipment(order: OrderRow): Promise<ShipmentResult> {
         units: i.qty,
         sellingPrice: i.unit_price_paise / 100,
       })),
-      paymentMethod: "Prepaid",
+      paymentMethod: order.payment_method === "cod" ? "COD" : "Prepaid",
       subTotal: order.total_paise / 100,
     });
   } catch (err) {

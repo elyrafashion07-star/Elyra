@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createShipment } from "@/lib/orders/fulfil";
-import { nextOrderStatus } from "@/lib/orders/status";
+import { codPaidAt, nextOrderStatus } from "@/lib/orders/status";
 import { recordTrackingEvents } from "@/lib/orders/tracking";
 import { refundPayment } from "@/lib/razorpay/client";
 import { cancelOrders, getOrder, trackAwb } from "@/lib/shiprocket/client";
@@ -56,8 +56,8 @@ export async function packOrder(form: FormData): Promise<void> {
 
   let failure: string | null = null;
 
-  if (order.status !== "paid") {
-    failure = "Only paid orders can be packed.";
+  if (order.status !== "paid" && order.status !== "confirmed") {
+    failure = "Only paid or confirmed orders can be packed.";
   } else {
     const shipment = await createShipment(order);
 
@@ -68,7 +68,7 @@ export async function packOrder(form: FormData): Promise<void> {
         .from("orders")
         .update({ status: "packed" })
         .eq("id", order.id)
-        .eq("status", "paid");
+        .in("status", ["paid", "confirmed"]);
 
       if (error) {
         // Almost always: migration 0008 has not been run, so the database does not
@@ -107,9 +107,13 @@ async function pullTracking(orderId: string, awb: string): Promise<void> {
   );
 
   const db = getSupabaseAdmin();
-  const { data: order } = await db.from("orders").select("status").eq("id", orderId).maybeSingle();
+  const { data: order } = await db
+    .from("orders")
+    .select("status, payment_method, paid_at")
+    .eq("id", orderId)
+    .maybeSingle();
 
-  const update: Partial<Pick<OrderRow, "courier" | "status">> = {};
+  const update: Partial<Pick<OrderRow, "courier" | "status" | "paid_at">> = {};
 
   if (tracking.courier) update.courier = tracking.courier;
 
@@ -117,6 +121,9 @@ async function pullTracking(orderId: string, awb: string): Promise<void> {
   // refunded order delivered or walk a delivered one back.
   const next = order ? nextOrderStatus(order.status, tracking.status ?? "") : null;
   if (next) update.status = next;
+
+  const collectedAt = order ? codPaidAt(order, next) : null;
+  if (collectedAt) update.paid_at = collectedAt;
 
   if (Object.keys(update).length) {
     await db.from("orders").update(update).eq("id", orderId);
@@ -171,7 +178,7 @@ export async function syncFromShiprocket(form: FormData): Promise<void> {
     try {
       const remote = await getOrder(order.shiprocket_order_id);
       const changes: string[] = [];
-      const update: Partial<Pick<OrderRow, "awb" | "courier" | "status">> = {};
+      const update: Partial<Pick<OrderRow, "awb" | "courier" | "status" | "paid_at">> = {};
 
       if (remote.awb && remote.awb !== order.awb) {
         update.awb = remote.awb;
@@ -189,6 +196,9 @@ export async function syncFromShiprocket(form: FormData): Promise<void> {
         update.status = next;
         changes.push(`status ${next}`);
       }
+
+      const collectedAt = codPaidAt(order, next);
+      if (collectedAt) update.paid_at = collectedAt;
 
       if (Object.keys(update).length) {
         await db.from("orders").update(update).eq("id", order.id);
@@ -285,7 +295,7 @@ export async function setOrderStatus(form: FormData): Promise<void> {
   const status = String(form.get("status") ?? "").trim();
 
   // No "refunded": that one goes through refundOrder so money actually moves.
-  const ALLOWED: OrderStatus[] = ["paid", "packed", "shipped", "delivered", "cancelled"];
+  const ALLOWED: OrderStatus[] = ["confirmed", "paid", "packed", "shipped", "delivered", "cancelled"];
   if (!orderId || !ALLOWED.includes(status as OrderStatus)) return;
 
   const db = getSupabaseAdmin();

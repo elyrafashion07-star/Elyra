@@ -60,6 +60,7 @@ export type QuoteResult =
   | { ok: false; error: string };
 
 export type ConfirmResult = { ok: true; orderNo: string } | { ok: false; error: string };
+export type CodResult = { ok: true; orderNo: string } | { ok: false; error: string };
 
 const PINCODE = /^[1-9][0-9]{5}$/;
 const PHONE = /^[6-9]\d{9}$/;
@@ -101,6 +102,30 @@ async function deliveryError(pincode: string): Promise<string | null> {
   } catch (err) {
     console.error("[checkout] serviceability check failed:", err instanceof Error ? err.message : err);
     return null;
+  }
+}
+
+/**
+ * Same idea as {@link deliveryError}, but for Cash on Delivery — and stricter.
+ *
+ * A prepaid order that slips past a Shiprocket hiccup is still money in hand;
+ * a COD order that slips past one is a parcel nobody has paid a rupee for yet.
+ * So unlike deliveryError this fails *closed*: if serviceability cannot be
+ * confirmed, COD is refused rather than allowed on a guess.
+ */
+async function codDeliveryError(pincode: string): Promise<string | null> {
+  if (!isShiprocketConfigured) return "Cash on delivery is not available right now.";
+
+  try {
+    const result = await checkServiceability({ deliveryPincode: pincode, cod: true });
+    if (!result.serviceable) return `We cannot deliver to ${pincode} yet. Please try another pin code.`;
+    if (!result.codAvailable) {
+      return `Cash on delivery is not available for ${pincode}. Please choose online payment.`;
+    }
+    return null;
+  } catch (err) {
+    console.error("[checkout] COD serviceability check failed:", err instanceof Error ? err.message : err);
+    return "We could not confirm cash on delivery for this pin code. Please choose online payment, or try again.";
   }
 }
 
@@ -180,6 +205,7 @@ export async function startCheckout({
     .insert({
       user_id: user.id,
       status: "pending",
+      payment_method: "prepaid",
       subtotal_paise: subtotalPaise,
       shipping_paise: shippingPaise,
       discount_paise: discountPaise,
@@ -290,6 +316,95 @@ export async function confirmPayment({
   }
 
   await fulfilOrder({ orderId, paymentId: razorpayPaymentId });
+
+  revalidatePath("/account");
+  return { ok: true, orderNo: order.order_no };
+}
+
+/**
+ * Places a Cash on Delivery order.
+ *
+ * There is no Razorpay order and no confirm step: with nothing collected
+ * online there is nothing to verify, so the order is inserted already
+ * `confirmed` and joins paid orders in the admin's "ready to pack" queue.
+ */
+export async function startCodOrder({
+  lines,
+  address,
+  note,
+}: {
+  lines: CartLineInput[];
+  address: Address;
+  note?: string;
+}): Promise<CodResult> {
+  const user = await getUser();
+  if (!user) return { ok: false, error: "Please sign in to place an order." };
+
+  const invalid = validate(address);
+  if (invalid) return { ok: false, error: invalid };
+
+  const priced = await priceCart(lines, { userId: user.id });
+  if (!priced.ok) return { ok: false, error: priced.error };
+
+  const undeliverable = await codDeliveryError(address.pincode.trim());
+  if (undeliverable) return { ok: false, error: undeliverable };
+
+  const { items, subtotalPaise, shippingPaise, discountPaise, totalPaise } = priced.cart;
+  const db = getSupabaseAdmin();
+
+  const { data: order, error } = await db
+    .from("orders")
+    .insert({
+      user_id: user.id,
+      status: "confirmed",
+      payment_method: "cod",
+      subtotal_paise: subtotalPaise,
+      shipping_paise: shippingPaise,
+      discount_paise: discountPaise,
+      total_paise: totalPaise,
+      currency: "INR",
+      ship_name: address.name.trim(),
+      ship_phone: address.phone.trim(),
+      ship_email: address.email.trim(),
+      ship_line1: address.line1.trim(),
+      ship_line2: address.line2?.trim() || null,
+      ship_city: address.city.trim(),
+      ship_state: address.state.trim(),
+      ship_pincode: address.pincode.trim(),
+      ship_country: "India",
+      razorpay_order_id: null,
+      razorpay_payment_id: null,
+      paid_at: null,
+      shipment_requested_at: null,
+      shiprocket_order_id: null,
+      shiprocket_shipment_id: null,
+      awb: null,
+      courier: null,
+      note: note?.trim() || null,
+      failure_reason: null,
+    })
+    .select()
+    .single();
+
+  if (error || !order) {
+    console.error("[checkout] COD order insert failed:", error?.message);
+    return { ok: false, error: "We could not place your order. Please try again." };
+  }
+
+  const { error: itemsError } = await db
+    .from("order_items")
+    .insert(items.map((i) => ({ ...i, order_id: order.id })));
+
+  if (itemsError) {
+    console.error("[checkout] COD order items insert failed:", itemsError.message);
+    // No race to guard against here — this order was never visible to anyone
+    // else — so the guard markOrderFailed relies on elsewhere is not needed.
+    await db
+      .from("orders")
+      .update({ status: "failed", failure_reason: "items insert failed" })
+      .eq("id", order.id);
+    return { ok: false, error: "We could not place your order. Please try again." };
+  }
 
   revalidatePath("/account");
   return { ok: true, orderNo: order.order_no };

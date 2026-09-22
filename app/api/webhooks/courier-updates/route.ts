@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { nextOrderStatus } from "@/lib/orders/status";
+import { codPaidAt, nextOrderStatus } from "@/lib/orders/status";
 import { recordTrackingEvents } from "@/lib/orders/tracking";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { OrderRow } from "@/lib/supabase/types";
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   const db = getSupabaseAdmin();
   const { data: order } = await db
     .from("orders")
-    .select("id, order_no, status")
+    .select("id, order_no, status, payment_method, paid_at")
     .eq("order_no", orderNo)
     .maybeSingle();
 
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
   // Typed rather than a loose record: `status` has to stay an OrderStatus, and
   // a stray key here would be written straight to the row.
-  const update: Partial<Pick<OrderRow, "awb" | "courier" | "status">> = {};
+  const update: Partial<Pick<OrderRow, "awb" | "courier" | "status" | "paid_at">> = {};
 
   if (payload.awb) update.awb = String(payload.awb);
   if (payload.courier_name) update.courier = payload.courier_name;
@@ -104,6 +104,10 @@ export async function POST(request: NextRequest) {
   // Forward-only, and conservative about what counts as delivered — see status.ts.
   const nextStatus = nextOrderStatus(order.status, rawStatus);
   if (nextStatus) update.status = nextStatus;
+
+  // A COD order's cash lands with the courier on delivery, not before.
+  const collectedAt = codPaidAt(order, nextStatus);
+  if (collectedAt) update.paid_at = collectedAt;
 
   if (!Object.keys(update).length) {
     return NextResponse.json({ ok: true, ignored: "nothing to change" });

@@ -22,13 +22,14 @@ export default async function AdminOrdersPage({
   // would otherwise scope this to the admin's own purchases.
   const { data: orders } = await getSupabaseAdmin()
     .from("orders")
-    .select("id, order_no, status, total_paise, created_at, ship_name, awb, shiprocket_order_id")
+    .select("id, order_no, status, payment_method, total_paise, created_at, ship_name, awb, shiprocket_order_id")
     .order("created_at", { ascending: false })
     .limit(200);
 
-  // Paid and waiting: nothing reaches Shiprocket until someone packs the order.
-  // Oldest first, so the queue is worked in the order customers paid.
-  const toPack = (orders ?? []).filter((o) => o.status === "paid").reverse();
+  // Paid and confirmed (COD) orders both wait here: nothing reaches Shiprocket
+  // until someone packs the order. Oldest first, so the queue is worked in the
+  // order customers ordered.
+  const toPack = (orders ?? []).filter((o) => o.status === "paid" || o.status === "confirmed").reverse();
 
   return (
     <Container className="py-10 sm:py-14">
@@ -75,6 +76,7 @@ export default async function AdminOrdersPage({
                 <span className="min-w-0 flex-1 truncate text-[13px] text-ink-soft">
                   {order.ship_name}
                 </span>
+                {order.payment_method === "cod" ? <CodBadge /> : null}
                 <span className="w-20 shrink-0 text-right text-[13px] font-semibold">
                   {formatPaise(order.total_paise)}
                 </span>
@@ -107,6 +109,7 @@ export default async function AdminOrdersPage({
               <span className="min-w-0 flex-1 truncate text-[13px] text-ink-soft">
                 {order.ship_name}
               </span>
+              {order.payment_method === "cod" ? <CodBadge /> : null}
               <StatusPill status={order.status} />
               <span className="w-20 shrink-0 text-right text-[13px] font-semibold">
                 {formatPaise(order.total_paise)}
@@ -131,7 +134,7 @@ export default async function AdminOrdersPage({
 
 function StatusPill({ status }: { status: string }) {
   const tone =
-    status === "paid"
+    status === "paid" || status === "confirmed"
       ? "border-amber-200 bg-amber-50 text-amber-900"
       : status === "packed" || status === "delivered" || status === "shipped"
         ? "border-green-200 bg-green-50 text-green-800"
@@ -141,7 +144,16 @@ function StatusPill({ status }: { status: string }) {
 
   return (
     <span className={`shrink-0 border px-2.5 py-1 text-[11px] tracking-[0.08em] uppercase ${tone}`}>
-      {status === "paid" ? "to pack" : status}
+      {status === "paid" || status === "confirmed" ? "to pack" : status}
+    </span>
+  );
+}
+
+/** Reminds whoever is packing that this parcel needs cash collected at the door. */
+function CodBadge() {
+  return (
+    <span className="shrink-0 border border-gold/40 bg-gold/10 px-2 py-1 text-[10px] font-semibold tracking-[0.1em] text-gold">
+      COD
     </span>
   );
 }

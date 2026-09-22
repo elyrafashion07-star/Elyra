@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, ShieldCheck } from "lucide-react";
-import { confirmPayment, quoteCheckout, startCheckout, type Address, type QuoteResult } from "@/app/checkout/actions";
+import {
+  confirmPayment,
+  quoteCheckout,
+  startCheckout,
+  startCodOrder,
+  type Address,
+  type QuoteResult,
+} from "@/app/checkout/actions";
 import { formatPaise, formatPrice } from "@/lib/format";
 import { cartSubtotal, useCart } from "@/lib/store/cart";
 import { site } from "@/data/site";
@@ -83,6 +90,8 @@ export default function CheckoutForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [delivery, setDelivery] = useState<string | null>(null);
+  const [codAvailable, setCodAvailable] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"prepaid" | "cod">("prepaid");
 
   const subtotal = mounted ? cartSubtotal(lines) : 0;
   const empty = mounted && lines.length === 0;
@@ -119,16 +128,24 @@ export default function CheckoutForm({
   const priced = quote?.ok ? quote : null;
   const totalLabel = priced ? formatPaise(priced.totalPaise) : formatPrice(subtotal);
 
-  /** Warns about a pin code Shiprocket cannot reach — before any money moves. */
+  /**
+   * Warns about a pin code Shiprocket cannot reach — before any money moves —
+   * and, along the way, is what decides whether Cash on Delivery gets offered
+   * at all. A pincode edited after COD was picked can turn it back off, so any
+   * change here also resets the choice back to prepaid.
+   */
   async function checkPincode(pincode: string) {
     setDelivery(null);
+    setCodAvailable(false);
+    setPaymentMethod("prepaid");
     if (!PINCODE.test(pincode)) return;
 
     try {
       const res = await fetch(`/api/shipping/serviceability?pincode=${pincode}`);
-      const data = (await res.json()) as { serviceable?: boolean; minDays?: number };
+      const data = (await res.json()) as { serviceable?: boolean; minDays?: number; codAvailable?: boolean };
       if (!res.ok) return;
 
+      setCodAvailable(Boolean(data.serviceable && data.codAvailable));
       setDelivery(
         data.serviceable
           ? `Delivers to ${pincode}${data.minDays ? ` in about ${data.minDays} days` : ""}.`
@@ -159,11 +176,23 @@ export default function CheckoutForm({
 
     // Only handles, variants and quantities go to the server — it prices the
     // order itself, so nothing here can change what gets charged.
-    const started = await startCheckout({
-      lines: lines.map((l) => ({ handle: l.handle, variant: l.variant ?? null, qty: l.qty })),
-      address,
-      note,
-    });
+    const cartLines = lines.map((l) => ({ handle: l.handle, variant: l.variant ?? null, qty: l.qty }));
+
+    if (paymentMethod === "cod") {
+      const placed = await startCodOrder({ lines: cartLines, address, note });
+
+      if (!placed.ok) {
+        setError(placed.error);
+        setPending(false);
+        return;
+      }
+
+      clear();
+      router.push(`/account/orders/${placed.orderNo}`);
+      return;
+    }
+
+    const started = await startCheckout({ lines: cartLines, address, note });
 
     if (!started.ok) {
       setError(started.error);
@@ -284,6 +313,43 @@ export default function CheckoutForm({
         </div>
 
         {delivery ? <p className="text-[12px] text-muted">{delivery}</p> : null}
+
+        <div className="pt-2">
+          <h2 className="text-[11px] font-semibold tracking-[0.16em] uppercase">Payment Method</h2>
+          <div className="mt-3 space-y-2">
+            <label className="flex cursor-pointer items-start gap-3 border border-line px-4 py-3 has-[:checked]:border-gold">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="prepaid"
+                checked={paymentMethod === "prepaid"}
+                onChange={() => setPaymentMethod("prepaid")}
+                className="mt-0.5"
+              />
+              <span className="text-[13px]">
+                <span className="block font-semibold">Pay Online</span>
+                <span className="text-muted">UPI, cards or net banking, secured by Razorpay.</span>
+              </span>
+            </label>
+
+            {codAvailable ? (
+              <label className="flex cursor-pointer items-start gap-3 border border-line px-4 py-3 has-[:checked]:border-gold">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="cod"
+                  checked={paymentMethod === "cod"}
+                  onChange={() => setPaymentMethod("cod")}
+                  className="mt-0.5"
+                />
+                <span className="text-[13px]">
+                  <span className="block font-semibold">Cash on Delivery</span>
+                  <span className="text-muted">Pay in cash when your order arrives.</span>
+                </span>
+              </label>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       {/* summary */}
@@ -350,11 +416,20 @@ export default function CheckoutForm({
           className="mt-5 flex w-full items-center justify-center gap-2 bg-ink py-3.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold disabled:opacity-70"
         >
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-          {pending ? "Opening payment…" : quoting ? "Checking prices…" : `Pay ${totalLabel}`}
+          {pending
+            ? paymentMethod === "cod"
+              ? "Placing order…"
+              : "Opening payment…"
+            : quoting
+              ? "Checking prices…"
+              : paymentMethod === "cod"
+                ? `Place Order · ${totalLabel} on Delivery`
+                : `Pay ${totalLabel}`}
         </button>
 
         <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-muted">
-          <ShieldCheck className="h-3.5 w-3.5" /> Secured by Razorpay · UPI, cards, net banking
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {paymentMethod === "cod" ? "Pay the courier in cash on delivery" : "Secured by Razorpay · UPI, cards, net banking"}
         </p>
       </aside>
     </form>

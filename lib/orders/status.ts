@@ -2,7 +2,7 @@
  * Courier status → order status, shared by the Shiprocket webhook and the admin
  * "refresh tracking" button so the two can never disagree.
  */
-import type { OrderStatus } from "@/lib/supabase/types";
+import type { OrderRow, OrderStatus } from "@/lib/supabase/types";
 
 /**
  * Their status strings vary by courier and change over time, so this matches
@@ -51,4 +51,16 @@ export function nextOrderStatus(current: OrderStatus, rawCourierStatus: string):
   if (!mapped || mapped === current) return null;
   if (!ADVANCEABLE.includes(current)) return null;
   return mapped;
+}
+
+/**
+ * For a COD order, "delivered" is the moment the courier actually collects the
+ * cash — nothing was taken online, so that is the closest thing this ledger has
+ * to `paid_at`. Returns the timestamp to write, or null when there is nothing
+ * to record (a prepaid order, one already marked paid, or no status change).
+ */
+export function codPaidAt(order: Pick<OrderRow, "payment_method" | "paid_at">, nextStatus: OrderStatus | null): string | null {
+  if (nextStatus !== "delivered") return null;
+  if (order.payment_method !== "cod" || order.paid_at) return null;
+  return new Date().toISOString();
 }

@@ -178,8 +178,8 @@ export const policyPages: StaticPage[] = [
       {
         heading: "Payment",
         body: [
-          "All orders are prepaid. We accept UPI, cards, net banking and wallets through our payment partner — your card details never touch our servers.",
-          "Cash on delivery is not available.",
+          "Pay online via UPI, cards, net banking or wallets through our payment partner — your card details never touch our servers.",
+          "Cash on Delivery is available on eligible pin codes — you'll see the option at checkout if it's available for your address.",
         ],
       },
     ],

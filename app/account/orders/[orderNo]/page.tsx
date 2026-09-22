@@ -21,6 +21,11 @@ const STATUS: Record<OrderStatus, { label: string; note: string; tone: string }>
     note: "If you have just paid, this updates within a minute — no need to pay again.",
     tone: "text-amber-700",
   },
+  confirmed: {
+    label: "Confirmed",
+    note: "Order confirmed for Cash on Delivery — please keep the amount ready for the courier. It ships within 24–48 hours.",
+    tone: "text-green-700",
+  },
   paid: {
     label: "Confirmed",
     note: "We have your payment and are getting your order ready. It ships within 24–48 hours.",
