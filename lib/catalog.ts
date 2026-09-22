@@ -157,8 +157,6 @@ export async function trendingProducts(): Promise<Product[]> {
 }
 
 const COMPLETE_YOUR_LOOK = [
-  "eternal-bloom-rakhi",
-  "infinity-bhai-rakhi",
   "flora-whisper-ring",
   "lovers-loop-bracelet",
 ];

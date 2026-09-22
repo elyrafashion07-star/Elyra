@@ -27,7 +27,7 @@ export default function SearchResults() {
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Search rings, anklets, rakhi…"
+          placeholder="Search rings, anklets, bracelets…"
           className="w-full bg-transparent text-base outline-none placeholder:text-muted"
         />
         <button type="submit" aria-label="Search">

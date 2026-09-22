@@ -67,7 +67,7 @@ export default function SearchOverlay({ open, onClose }: { open: boolean; onClos
               autoFocus={open}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search rings, anklets, rakhi…"
+              placeholder="Search rings, anklets, bracelets…"
               className="w-full bg-transparent text-base outline-none placeholder:text-muted"
             />
             <button type="submit" aria-label="Submit search">

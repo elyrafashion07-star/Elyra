@@ -5,7 +5,6 @@ export const collections: Collection[] = [
   { handle: "all", title: "All Jewellery", description: "Every piece in the Elyrafashion world — artificial fashion jewellery, finished by hand.", group: "feature" },
   { handle: "new-arrivals", title: "New Arrivals", description: "The freshest additions to the studio, restocked every fortnight.", group: "feature" },
   { handle: "bestseller", title: "Bestseller", description: "The pieces our customers keep coming back for.", group: "feature" },
-  { handle: "rakhi-2026", title: "Rakhi Collection 2026", description: "Artificial rakhis and rakhi bracelets, made to be worn long after the thread season.", group: "feature" },
 
   // ── category ───────────────────────────────────────────────
   { handle: "rings", title: "Rings", description: "Stackable bands, solitaires and statement silhouettes.", group: "category", image: "/images/categories/rings.jpg" },
@@ -53,8 +52,8 @@ export const collections: Collection[] = [
   // Filenames come straight from the uploads — note "wifi.png" is the wife tile.
   { handle: "gift-for-wife", title: "Gift for Wife", description: "For her — pendants, solitaires and everyday luxe.", group: "gifting", image: "/images/gifting/wifi.png" },
   { handle: "gift-for-husband", title: "Gift for Husband", description: "For him — bold bracelets and signet rings.", group: "gifting", image: "/images/gifting/husband.png" },
-  { handle: "gift-for-sister", title: "Gift for Sister", description: "Rakhi-season favourites and forever pieces.", group: "gifting", image: "/images/gifting/sister.png" },
-  { handle: "gift-for-brother", title: "Gift for Brother", description: "Rakhi bracelets and men's styles he'll actually wear.", group: "gifting", image: "/images/gifting/brother.webp" },
+  { handle: "gift-for-sister", title: "Gift for Sister", description: "Everyday favourites and forever pieces.", group: "gifting", image: "/images/gifting/sister.png" },
+  { handle: "gift-for-brother", title: "Gift for Brother", description: "Bold bracelets and men's styles he'll actually wear.", group: "gifting", image: "/images/gifting/brother.webp" },
   { handle: "gift-for-mother", title: "Gift for Mother", description: "Timeless pieces with a little sentiment.", group: "gifting", image: "/images/gifting/mother.jpg" },
   { handle: "gift-for-father", title: "Gift for Father", description: "Understated, well-made, built to last.", group: "gifting", image: "/images/gifting/father.jpg" },
   { handle: "gift-for-her", title: "Gift for Her", description: "Every women's gift in one place.", group: "gifting" },

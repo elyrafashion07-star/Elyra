@@ -35,7 +35,6 @@ export const mainNav: NavItem[] = [
       { label: "Gift for Him", href: "/collections/gift-for-him" },
     ],
   },
-  { label: "Rakhi Collection 2026", href: "/collections/rakhi-2026" },
 ];
 
 export const footerCategories: NavItem[] = [

@@ -34,9 +34,9 @@ export async function saveMenuItem(
   const sortRaw = clean(form, "sort_order");
 
   if (!label) return { error: "Enter the text that shows in the menu." };
-  if (!href) return { error: "Enter the link, e.g. /collections/rakhi-2026." };
+  if (!href) return { error: "Enter the link, e.g. /collections/bestseller." };
   if (!href.startsWith("/") && !href.startsWith("http")) {
-    return { error: "The link must start with / — for example /collections/rakhi-2026." };
+    return { error: "The link must start with / — for example /collections/bestseller." };
   }
 
   const sortOrder = Number(sortRaw);

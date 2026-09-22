@@ -149,7 +149,7 @@ function ItemForm({
               setLabel(next);
               if (!hrefEdited) setHref(next.trim() ? `/collections/${slugify(next)}` : "");
             }}
-            placeholder="Rakhi Collection 2026"
+            placeholder="Bestseller"
             className="w-full border border-line bg-white px-3 py-2.5 text-sm outline-none focus:border-gold"
           />
         </label>
@@ -165,7 +165,7 @@ function ItemForm({
               setHrefEdited(true);
               setHref(e.currentTarget.value);
             }}
-            placeholder="/collections/rakhi-2026"
+            placeholder="/collections/bestseller"
             className="w-full border border-line bg-white px-3 py-2.5 text-sm outline-none focus:border-gold"
           />
         </label>

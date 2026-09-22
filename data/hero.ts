@@ -16,10 +16,10 @@ export type HeroSlide = {
 
 export const heroSlides: HeroSlide[] = [
   {
-    eyebrow: "Rakhi Collection 2026",
-    title: "Rakhi Styles He Will Love",
-    text: "Artificial rakhis and rakhi bracelets he will actually keep wearing.",
-    cta: { label: "Shop Rakhi 2026", href: "/collections/rakhi-2026" },
+    eyebrow: "Bestseller",
+    title: "The Pieces Everyone Reorders",
+    text: "Fan-favourite artificial jewellery, restocked because you keep asking for it.",
+    cta: { label: "Shop Bestsellers", href: "/collections/bestseller" },
     desktopSrc: "/images/banners/b1.PNG",
     mobileSrc: "/images/banners/b1.PNG",
     focus: "object-center",
