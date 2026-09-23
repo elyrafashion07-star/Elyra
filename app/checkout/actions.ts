@@ -77,6 +77,9 @@ function validate(address: Address): string | null {
   }
   if (!EMAIL.test(address.email?.trim() ?? "")) return "Enter a valid email address.";
   if (!address.line1?.trim()) return "Enter the address.";
+  // Catches "asd" and other placeholder junk before it becomes an undeliverable
+  // parcel — a real house/street address is never this short.
+  if (address.line1.trim().length < 8) return "Enter a complete address, not just a few characters.";
   if (!address.city?.trim()) return "Enter the city.";
   if (!address.state?.trim()) return "Enter the state.";
   if (!PINCODE.test(address.pincode?.trim() ?? "")) return "Enter a valid 6-digit pin code.";

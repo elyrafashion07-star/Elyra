@@ -90,8 +90,21 @@ export default function CheckoutForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [delivery, setDelivery] = useState<string | null>(null);
+  // True once a pincode comes back genuinely unreachable — separate from
+  // `delivery` being empty, which just means nothing has been checked yet.
+  const [undeliverable, setUndeliverable] = useState(false);
   const [codAvailable, setCodAvailable] = useState(false);
+  // Only meaningful once a pincode has been checked and is deliverable: tells
+  // the shopper plainly that COD specifically is not on offer there.
+  const [codUnavailableNote, setCodUnavailableNote] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"prepaid" | "cod">("prepaid");
+
+  // City and State are filled in from the pin code once it looks real, but stay
+  // editable by hand — a pincode can straddle more than one town.
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [pincodeError, setPincodeError] = useState<string | null>(null);
+  const [checkingPincode, setCheckingPincode] = useState(false);
 
   const subtotal = mounted ? cartSubtotal(lines) : 0;
   const empty = mounted && lines.length === 0;
@@ -129,36 +142,82 @@ export default function CheckoutForm({
   const totalLabel = priced ? formatPaise(priced.totalPaise) : formatPrice(subtotal);
 
   /**
-   * Warns about a pin code Shiprocket cannot reach — before any money moves —
-   * and, along the way, is what decides whether Cash on Delivery gets offered
-   * at all. A pincode edited after COD was picked can turn it back off, so any
-   * change here also resets the choice back to prepaid.
+   * Runs the moment a pin code looks complete: confirms it actually exists (so
+   * a typo is caught here, not after the order is placed), fills in City and
+   * State from it, and — the same as before — checks whether Shiprocket can
+   * reach it and whether Cash on Delivery is on offer there.
+   *
+   * A pincode edited after COD was picked can turn it back off, so any change
+   * here also resets the choice back to prepaid.
    */
   async function checkPincode(pincode: string) {
     setDelivery(null);
+    setUndeliverable(false);
     setCodAvailable(false);
+    setCodUnavailableNote(null);
     setPaymentMethod("prepaid");
-    if (!PINCODE.test(pincode)) return;
+    setPincodeError(null);
+
+    if (!pincode) return;
+    if (!PINCODE.test(pincode)) {
+      setPincodeError("Enter a valid 6-digit pin code.");
+      return;
+    }
+
+    setCheckingPincode(true);
 
     try {
+      const lookup = await fetch(`/api/pincode/lookup?pincode=${pincode}`);
+      const lookupData = (await lookup.json()) as { valid?: boolean | null; city?: string | null; state?: string | null };
+
+      // false means India Post has no such pincode — that is a typo, and the
+      // order must not go through with an address that cannot exist. null
+      // (lookup service unreachable) is not a verdict either way, so it falls
+      // through to the delivery check same as before.
+      if (lookupData.valid === false) {
+        setPincodeError("We could not find that pin code — please check and re-enter it.");
+        return;
+      }
+
+      if (lookupData.valid) {
+        if (lookupData.city) setCity(lookupData.city);
+        if (lookupData.state) setState(lookupData.state);
+      }
+
       const res = await fetch(`/api/shipping/serviceability?pincode=${pincode}`);
       const data = (await res.json()) as { serviceable?: boolean; minDays?: number; codAvailable?: boolean };
       if (!res.ok) return;
 
-      setCodAvailable(Boolean(data.serviceable && data.codAvailable));
-      setDelivery(
-        data.serviceable
-          ? `Delivers to ${pincode}${data.minDays ? ` in about ${data.minDays} days` : ""}.`
-          : `We cannot deliver to ${pincode} yet — please try another pin code.`,
-      );
+      if (!data.serviceable) {
+        setUndeliverable(true);
+        setDelivery(`We cannot deliver to ${pincode} yet — please try another pin code.`);
+        return;
+      }
+
+      setDelivery(`Delivers to ${pincode}${data.minDays ? ` in about ${data.minDays} days` : ""}.`);
+      setCodAvailable(Boolean(data.codAvailable));
+      if (!data.codAvailable) {
+        setCodUnavailableNote(`Cash on Delivery is not available for ${pincode} — please pay online.`);
+      }
     } catch {
       // A failed check must never block checkout; the address is validated anyway.
+    } finally {
+      setCheckingPincode(false);
     }
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    if (pincodeError) {
+      setError(pincodeError);
+      return;
+    }
+    if (undeliverable) {
+      setError(delivery ?? "We cannot deliver to this pin code yet.");
+      return;
+    }
 
     const form = new FormData(event.currentTarget);
     const address: Address = {
@@ -276,18 +335,25 @@ export default function CheckoutForm({
         </div>
 
         <Field name="email" label="Email" type="email" defaultValue={defaultEmail} autoComplete="email" />
-        <Field name="line1" label="Address" autoComplete="address-line1" />
+        <Field name="line1" label="Address" autoComplete="address-line1" minLength={8} />
         <Field name="line2" label="Apartment, landmark (optional)" required={false} autoComplete="address-line2" />
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field name="city" label="City" autoComplete="address-level2" />
+          <Field
+            name="city"
+            label="City"
+            autoComplete="address-level2"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+          />
 
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold tracking-[0.14em] uppercase">State</span>
             <select
               name="state"
               required
-              defaultValue=""
+              value={state}
+              onChange={(e) => setState(e.target.value)}
               autoComplete="address-level1"
               className="w-full border border-line bg-white px-4 py-3 text-sm outline-none focus:border-gold"
             >
@@ -308,11 +374,33 @@ export default function CheckoutForm({
             autoComplete="postal-code"
             inputMode="numeric"
             maxLength={6}
+            // Fires as soon as a real 6-digit code is typed, not just on blur —
+            // City and State fill in before the shopper has even tabbed away.
+            onChange={(e) => {
+              const digits = e.currentTarget.value.replace(/\D/g, "").slice(0, 6);
+              if (e.currentTarget.value !== digits) e.currentTarget.value = digits;
+              if (digits.length === 6) checkPincode(digits);
+              else {
+                setPincodeError(null);
+                setDelivery(null);
+                setUndeliverable(false);
+                setCodUnavailableNote(null);
+              }
+            }}
             onBlur={(e) => checkPincode(e.currentTarget.value.trim())}
           />
         </div>
 
-        {delivery ? <p className="text-[12px] text-muted">{delivery}</p> : null}
+        {pincodeError ? (
+          <p className="text-[12px] text-red-700">{pincodeError}</p>
+        ) : checkingPincode ? (
+          <p className="text-[12px] text-muted">Checking pin code…</p>
+        ) : delivery ? (
+          <div className="space-y-1">
+            <p className={`text-[12px] ${undeliverable ? "text-red-700" : "text-muted"}`}>{delivery}</p>
+            {codUnavailableNote ? <p className="text-[12px] text-amber-700">{codUnavailableNote}</p> : null}
+          </div>
+        ) : null}
 
         <div className="pt-2">
           <h2 className="text-[11px] font-semibold tracking-[0.16em] uppercase">Payment Method</h2>
@@ -406,7 +494,15 @@ export default function CheckoutForm({
 
         <button
           type="submit"
-          disabled={pending || !mounted || quoting || (quote !== null && !quote.ok)}
+          disabled={
+            pending ||
+            !mounted ||
+            quoting ||
+            checkingPincode ||
+            Boolean(pincodeError) ||
+            undeliverable ||
+            (quote !== null && !quote.ok)
+          }
           className="mt-5 flex w-full items-center justify-center gap-2 bg-ink py-3.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold disabled:opacity-70"
         >
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
