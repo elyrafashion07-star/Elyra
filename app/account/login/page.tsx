@@ -28,6 +28,7 @@ export default async function LoginPage({
         action={signIn}
         next={next}
         initialError={error ? (LINK_ERRORS[error] ?? "That link could not be verified.") : undefined}
+        showGoogle
         fields={[
           { name: "email", label: "Email", type: "email", autoComplete: "email" },
           { name: "password", label: "Password", type: "password", autoComplete: "current-password" },

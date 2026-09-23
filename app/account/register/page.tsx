@@ -12,6 +12,7 @@ export default function RegisterPage() {
         title="Create Account"
         intro="Register to check out faster, save a wishlist and track every order."
         action={signUp}
+        showGoogle
         fields={[
           { name: "name", label: "Full Name", type: "text", autoComplete: "name" },
           { name: "email", label: "Email", type: "email", autoComplete: "email" },

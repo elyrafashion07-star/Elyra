@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import type { AuthState } from "@/app/account/actions";
+import GoogleButton from "@/components/account/GoogleButton";
 
 type Field = { name: string; label: string; type: string; autoComplete?: string; required?: boolean };
 
@@ -20,6 +21,7 @@ export default function AuthForm({
   next,
   initialError,
   initialNotice,
+  showGoogle,
 }: {
   title: string;
   intro: string;
@@ -35,6 +37,8 @@ export default function AuthForm({
   /** Shown before the form is submitted — e.g. a dead link bounced back here. */
   initialError?: string;
   initialNotice?: string;
+  /** Off by default — only login and register offer it, not password reset. */
+  showGoogle?: boolean;
 }) {
   const [state, formAction] = useActionState<AuthState, FormData>(action, {});
   const error = state.error ?? initialError;
@@ -99,6 +103,17 @@ export default function AuthForm({
 
         <Submit label={submitLabel} />
       </form>
+
+      {showGoogle ? (
+        <>
+          <div className="my-6 flex items-center gap-3 text-[11px] font-semibold tracking-[0.14em] text-muted">
+            <span className="h-px flex-1 bg-line" aria-hidden />
+            OR
+            <span className="h-px flex-1 bg-line" aria-hidden />
+          </div>
+          <GoogleButton next={next} />
+        </>
+      ) : null}
 
       {footerText && footerLink ? (
         <p className="mt-6 text-center text-[13px] text-muted">
