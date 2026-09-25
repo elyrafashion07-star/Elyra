@@ -11,6 +11,8 @@ type CartState = {
   open: () => void;
   close: () => void;
   add: (line: Omit<CartLine, "qty">, qty?: number) => void;
+  /** Puts the line in the cart at exactly `qty`, without opening the drawer. */
+  buyNow: (line: Omit<CartLine, "qty">, qty: number) => void;
   remove: (handle: string, variant?: string) => void;
   setQty: (handle: string, qty: number, variant?: string) => void;
   setNote: (note: string) => void;
@@ -46,6 +48,16 @@ export const useCart = create<CartState>()(
             ? s.lines.map((l) => (same(l, line.handle, line.variant) ? { ...l, qty: clampQty(l.qty + qty) } : l))
             : [...s.lines, { ...line, qty: clampQty(qty) }];
           return { lines, isOpen: true };
+        }),
+      // Sets rather than adds: pressing Buy Now twice (or after Add to Cart)
+      // should check out the quantity on screen, not a running total.
+      buyNow: (line, qty) =>
+        set((s) => {
+          const existing = s.lines.some((l) => same(l, line.handle, line.variant));
+          const lines = existing
+            ? s.lines.map((l) => (same(l, line.handle, line.variant) ? { ...l, qty: clampQty(qty) } : l))
+            : [...s.lines, { ...line, qty: clampQty(qty) }];
+          return { lines, isOpen: false };
         }),
       remove: (handle, variant) =>
         set((s) => ({ lines: s.lines.filter((l) => !same(l, handle, variant)) })),

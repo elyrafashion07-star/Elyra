@@ -19,7 +19,14 @@ import type { Collection } from "@/lib/types";
  * category also becomes a tick-box on the product form, which is the whole point
  * of it being editable.
  */
-export default function CollectionForm({ collection }: { collection?: Collection }) {
+export default function CollectionForm({
+  collection,
+  defaultGroup = "category",
+}: {
+  collection?: Collection;
+  /** Pre-selected type for a new entry — the "Add Occasion" button passes "occasion". */
+  defaultGroup?: Collection["group"];
+}) {
   const [state, formAction] = useActionState<CollectionFormState, FormData>(saveCollection, {});
 
   const value = (key: string, fallback: string | number | undefined) =>
@@ -27,7 +34,7 @@ export default function CollectionForm({ collection }: { collection?: Collection
 
   const [title, setTitle] = useState(value("title", collection?.title));
   const [group, setGroup] = useState<Collection["group"]>(
-    (value("group", collection?.group) || "category") as Collection["group"],
+    (value("group", collection?.group) || defaultGroup) as Collection["group"],
   );
 
   const error = state.fieldErrors ?? {};

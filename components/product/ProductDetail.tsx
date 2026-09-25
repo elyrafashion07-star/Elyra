@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Heart, Minus, Plus, RefreshCw, ShieldCheck, Truck } from "lucide-react";
 import DeliveryCheck from "@/components/product/DeliveryCheck";
 import FixedImage from "@/components/ui/FixedImage";
@@ -19,9 +20,19 @@ export default function ProductDetail({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState<(typeof TABS)[number]>("Description");
 
+  const router = useRouter();
   const add = useCart((s) => s.add);
+  const buyNow = useCart((s) => s.buyNow);
   const wishlisted = useWishlist((s) => s.handles.includes(product.handle));
   const toggleWish = useWishlist((s) => s.toggle);
+
+  const cartLine = {
+    handle: product.handle,
+    title: product.title,
+    price: product.price,
+    variant,
+    image: product.images?.[0],
+  };
 
   const off = discountPercent(product.price, product.compareAt);
   // Real uploads drive the gallery; `gallery` is only the old placeholder count,
@@ -135,18 +146,7 @@ export default function ProductDetail({ product }: { product: Product }) {
             <button
               type="button"
               disabled={product.soldOut}
-              onClick={() =>
-                add(
-                  {
-                    handle: product.handle,
-                    title: product.title,
-                    price: product.price,
-                    variant,
-                    image: product.images?.[0],
-                  },
-                  qty,
-                )
-              }
+              onClick={() => add(cartLine, qty)}
               className="order-last w-full bg-ink px-8 py-3.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold disabled:cursor-not-allowed disabled:bg-muted sm:order-0 sm:w-auto sm:min-w-47.5 sm:flex-1"
             >
               {product.soldOut ? "Sold Out" : "Add to Cart"}
@@ -161,6 +161,19 @@ export default function ProductDetail({ product }: { product: Product }) {
               <Heart className={`h-5 w-5 ${wishlisted ? "fill-sale text-sale" : ""}`} />
             </button>
           </div>
+
+          {product.soldOut ? null : (
+            <button
+              type="button"
+              onClick={() => {
+                buyNow(cartLine, qty);
+                router.push("/checkout");
+              }}
+              className="mt-3 w-full bg-gold px-8 py-3.5 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream transition-colors hover:bg-gold-dark"
+            >
+              Buy Now
+            </button>
+          )}
 
           <DeliveryCheck weight={product.weight} />
 

@@ -6,13 +6,13 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import FixedImage from "@/components/ui/FixedImage";
-import { heroSlides } from "@/data/hero";
+import type { HeroSlide } from "@/data/hero";
 
 /** Steps down with the banner height so the title always clears the art. */
 const heading =
   "font-display text-base leading-tight xs:mt-1.5 xs:text-lg sm:mt-2 sm:text-2xl md:text-3xl lg:mt-3 lg:text-4xl xl:text-5xl";
 
-export default function HeroSlider() {
+export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
     Autoplay({ delay: 5000, stopOnInteraction: false }),
   ]);
@@ -31,12 +31,16 @@ export default function HeroSlider() {
   const prev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const next = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
+  // Every banner switched off in the admin panel: no hero at all rather than an
+  // empty grey box.
+  if (!slides.length) return null;
+
   return (
     <section className="relative" aria-label="Featured collections">
       <div ref={emblaRef} className="overflow-hidden">
         <div className="flex">
-          {heroSlides.map((slide, i) => (
-            <div key={slide.title} className="relative min-w-0 flex-[0_0_100%]">
+          {slides.map((slide, i) => (
+            <div key={`${i}-${slide.title}`} className="relative min-w-0 flex-[0_0_100%]">
               {/* Phone + tablet get the art at its own 16:9 ratio, so the full width
                   is always visible — object-contain keeps that true even if a future
                   banner ships at a different shape. Desktop keeps the wider 2:1 box. */}
@@ -114,9 +118,9 @@ export default function HeroSlider() {
       </button>
 
       <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-        {heroSlides.map((s, i) => (
+        {slides.map((s, i) => (
           <button
-            key={s.title}
+            key={`${i}-${s.title}`}
             type="button"
             aria-label={`Go to slide ${i + 1}`}
             onClick={() => emblaApi?.scrollTo(i)}

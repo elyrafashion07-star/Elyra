@@ -1,5 +1,6 @@
 import { Circle, MapPin } from "lucide-react";
 import type { OrderTrackingEventRow } from "@/lib/supabase/types";
+import AwbCard from "@/components/orders/AwbCard";
 
 /**
  * The parcel's journey, newest first.
@@ -18,21 +19,23 @@ export default function TrackingTimeline({
 }) {
   if (!events.length) {
     return (
-      <p className="mt-3 text-[13px] text-muted">
-        {awb
-          ? "No courier updates yet. They usually start within a few hours of pickup."
-          : "Tracking appears here once the courier is assigned."}
-      </p>
+      <>
+        {awb ? <AwbCard awb={awb} courier={courier} /> : null}
+        <p className="mt-3 text-[13px] text-muted">
+          {awb
+            ? "No courier updates yet. They usually start within a few hours of pickup."
+            : "Tracking appears here once the courier is assigned."}
+        </p>
+      </>
     );
   }
 
   return (
-    <div className="mt-4">
+    <div className="mt-1">
       {awb ? (
-        <p className="mb-4 text-[13px] text-ink-soft">
-          AWB <span className="text-ink">{awb}</span>
-          {courier ? ` · ${courier}` : ""}
-        </p>
+        <div className="mb-5">
+          <AwbCard awb={awb} courier={courier} />
+        </div>
       ) : null}
 
       <ol className="relative space-y-5 border-l border-line pl-6">

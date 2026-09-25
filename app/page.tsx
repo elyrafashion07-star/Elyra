@@ -1,4 +1,5 @@
 import HeroSlider from "@/components/home/HeroSlider";
+import { loadHeroSlides } from "@/lib/banners";
 import TrustStrip from "@/components/home/TrustStrip";
 import TrendingProducts from "@/components/home/TrendingProducts";
 import ShopByOccasion from "@/components/home/ShopByOccasion";
@@ -14,10 +15,12 @@ import Newsletter from "@/components/home/Newsletter";
  * 1 Hero · 2 Trust · 3 Trending · 4 Occasion · 5 Category
  * 6 Budget · 7 Why Us · 8 Gender · 9 Gifting · 10 Newsletter
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const slides = await loadHeroSlides();
+
   return (
     <>
-      <HeroSlider />
+      <HeroSlider slides={slides} />
       <TrustStrip />
       <TrendingProducts />
       <ShopByOccasion />

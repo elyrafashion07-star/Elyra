@@ -20,7 +20,7 @@ export default async function OrdersPage() {
   const supabase = await createClient();
   const { data: orders } = await supabase
     .from("orders")
-    .select("order_no, status, total_paise, created_at")
+    .select("order_no, status, total_paise, created_at, awb, courier")
     .order("created_at", { ascending: false });
 
   return (
@@ -55,6 +55,12 @@ export default async function OrdersPage() {
                       year: "numeric",
                     })}
                   </span>
+                  {order.awb ? (
+                    <span className="mt-1 block text-[12px] text-muted">
+                      Tracking ID <span className="text-ink-soft">{order.awb}</span>
+                      {order.courier ? ` · ${order.courier}` : ""}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="flex items-center gap-4 text-[13px]">
                   <span className="text-muted capitalize">{order.status}</span>
