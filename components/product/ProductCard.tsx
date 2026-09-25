@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 import FixedImage from "@/components/ui/FixedImage";
 import Badge from "@/components/ui/Badge";
@@ -12,10 +13,18 @@ import type { Product } from "@/lib/types";
 
 /** `sizes` lets a caller correct the image hint when its cards aren't grid-width. */
 export default function ProductCard({ product, sizes }: { product: Product; sizes?: string }) {
+  const router = useRouter();
   const add = useCart((s) => s.add);
+  const buyNow = useCart((s) => s.buyNow);
   const wishlisted = useWishlist((s) => s.handles.includes(product.handle));
   const toggleWish = useWishlist((s) => s.toggle);
   const off = discountPercent(product.price, product.compareAt);
+  const cartLine = {
+    handle: product.handle,
+    title: product.title,
+    price: product.price,
+    image: product.images?.[0],
+  };
 
   return (
     <div className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-line bg-white transition-shadow hover:shadow-lg hover:shadow-ink/5">
@@ -87,21 +96,28 @@ export default function ProductCard({ product, sizes }: { product: Product; size
             Choose {product.variants.label}
           </Link>
         ) : (
-          <button
-            type="button"
-            disabled={product.soldOut}
-            onClick={() =>
-              add({
-                handle: product.handle,
-                title: product.title,
-                price: product.price,
-                image: product.images?.[0],
-              })
-            }
-            className="mt-2 w-full rounded-md border border-ink bg-ink py-2.5 text-[11px] font-semibold tracking-[0.08em] uppercase text-cream transition-colors hover:bg-transparent hover:text-ink disabled:cursor-not-allowed disabled:border-line disabled:bg-sand disabled:text-muted sm:py-2 sm:text-xs sm:tracking-[0.12em]"
-          >
-            {product.soldOut ? "Sold Out" : "Add to Cart"}
-          </button>
+          <>
+            <button
+              type="button"
+              disabled={product.soldOut}
+              onClick={() => add(cartLine)}
+              className="mt-2 w-full rounded-md border border-ink bg-ink py-2.5 text-[11px] font-semibold tracking-[0.08em] uppercase text-cream transition-colors hover:bg-transparent hover:text-ink disabled:cursor-not-allowed disabled:border-line disabled:bg-sand disabled:text-muted sm:py-2 sm:text-xs sm:tracking-[0.12em]"
+            >
+              {product.soldOut ? "Sold Out" : "Add to Cart"}
+            </button>
+            {product.soldOut ? null : (
+              <button
+                type="button"
+                onClick={() => {
+                  buyNow(cartLine, 1);
+                  router.push("/checkout");
+                }}
+                className="w-full rounded-md border border-gold bg-gold py-2.5 text-[11px] font-semibold tracking-[0.08em] uppercase text-cream transition-colors hover:border-gold-dark hover:bg-gold-dark sm:py-2 sm:text-xs sm:tracking-[0.12em]"
+              >
+                Buy Now
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
