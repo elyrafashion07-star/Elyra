@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createShipment } from "@/lib/orders/fulfil";
+import { createShipment, requestAwb } from "@/lib/orders/fulfil";
 import { codPaidAt, nextOrderStatus } from "@/lib/orders/status";
 import { recordTrackingEvents } from "@/lib/orders/tracking";
 import { refundPayment } from "@/lib/razorpay/client";
@@ -55,6 +55,8 @@ export async function packOrder(form: FormData): Promise<void> {
   if (!order) return;
 
   let failure: string | null = null;
+  let notice = `${order.order_no} packed — Shiprocket order created.`;
+  let awbProblem: string | undefined;
 
   if (order.status !== "paid" && order.status !== "confirmed") {
     failure = "Only paid or confirmed orders can be packed.";
@@ -64,6 +66,9 @@ export async function packOrder(form: FormData): Promise<void> {
     if (!shipment.ok) {
       failure = shipment.error;
     } else {
+      if (shipment.awb) notice = `${order.order_no} packed — AWB ${shipment.awb} assigned. The customer can track it now.`;
+      else awbProblem = shipment.awbError;
+
       const { error } = await db
         .from("orders")
         .update({ status: "packed" })
@@ -85,7 +90,49 @@ export async function packOrder(form: FormData): Promise<void> {
   revalidatePath("/admin");
 
   // redirect() throws, so it has to sit outside any try/catch.
-  redirect(landing(order.order_no, from, failure ? { error: failure } : { notice: `${order.order_no} packed — Shiprocket order created.` }));
+  // Packed but no AWB: the order is fine, so this is shown as a warning with
+  // the reason, and the order page offers "Assign AWB" to try again.
+  redirect(
+    landing(
+      order.order_no,
+      from,
+      failure
+        ? { error: failure }
+        : awbProblem
+          ? { notice, error: `Packed, but no AWB yet: ${awbProblem}. Press "Assign AWB" on the order to retry.` }
+          : { notice },
+    ),
+  );
+}
+
+/**
+ * Asks Shiprocket for a courier and tracking number for an already-packed
+ * order — the retry for when Pack created the shipment but the AWB was refused
+ * (low wallet balance, courier rules), or for orders packed before this existed.
+ */
+export async function assignOrderAwb(form: FormData): Promise<void> {
+  if (!(await isAdmin())) return;
+
+  const orderId = String(form.get("order_id") ?? "").trim();
+  if (!orderId) return;
+
+  const { data: order } = await getSupabaseAdmin().from("orders").select("*").eq("id", orderId).maybeSingle();
+  if (!order) return;
+
+  const result = await requestAwb(order);
+
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${order.order_no}`);
+
+  redirect(
+    landing(
+      order.order_no,
+      "order",
+      result.ok
+        ? { notice: `AWB ${result.awb} assigned${result.courier ? ` (${result.courier})` : ""}. The customer can track it now.` }
+        : { error: `Could not assign an AWB: ${result.error}` },
+    ),
+  );
 }
 
 /**

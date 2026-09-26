@@ -60,7 +60,13 @@ Shiprocket → Settings → API → Webhooks:
 
 ## 5. AWB kab milta hai
 
-Order push sirf Shiprocket me order **banata** hai. AWB tab aata hai jab courier assign ho: Shiprocket panel me haath se, ya "auto-assign" on karke. Pickup location ka naam `SHIPROCKET_PICKUP_LOCATION` (default `Primary`) se bilkul match hona chahiye, warna har push fail hoga.
+Admin panel me **Pack** dabate hi do kaam hote hain: Shiprocket me order banta hai, aur turant `POST /courier/assign/awb` call hoke courier + AWB assign ho jaata hai (`lib/orders/fulfil.ts` → `requestAwb`). AWB order me save hota hai aur customer ko My Orders me turant Tracking ID dikhti hai — webhook ka intezaar nahi.
+
+- Courier Shiprocket ke **courier priority** rules se chuna jaata hai (Settings → Courier Priority).
+- AWB assign hote hi shipping charge Shiprocket **wallet** se katta hai. Wallet me balance kam ho to AWB nahi milega — order phir bhi `packed` ho jaata hai, admin ko reason dikhta hai, aur order page par **Assign AWB** button se dobara try kar sakte ho.
+- Pickup abhi bhi Shiprocket panel se schedule karna hai.
+
+Pickup location ka naam `SHIPROCKET_PICKUP_LOCATION` (default `Primary`) se bilkul match hona chahiye, warna har push fail hoga.
 
 ## Security
 

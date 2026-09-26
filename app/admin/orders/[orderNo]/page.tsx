@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, CheckCircle2, PackageCheck, RefreshCw, RotateCw, Undo2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, PackageCheck, RefreshCw, RotateCw, Truck, Undo2 } from "lucide-react";
 import Container from "@/components/ui/Container";
 import {
+  assignOrderAwb,
   packOrder,
   refreshTracking,
   refundOrder,
@@ -81,8 +82,8 @@ export default async function AdminOrderPage({
           <input type="hidden" name="from" value="order" />
           <p className="text-[13px] text-amber-900">
             {order.payment_method === "cod"
-              ? `Cash on Delivery — collect ${formatPaise(order.total_paise)} on delivery. Pressing Pack creates the order in Shiprocket.`
-              : "Paid and waiting to be packed. Pressing Pack creates the order in Shiprocket."}
+              ? `Cash on Delivery — collect ${formatPaise(order.total_paise)} on delivery. Pressing Pack creates the order in Shiprocket and assigns a courier (AWB).`
+              : "Paid and waiting to be packed. Pressing Pack creates the order in Shiprocket and assigns a courier (AWB)."}
           </p>
           <button
             type="submit"
@@ -112,6 +113,14 @@ export default async function AdminOrderPage({
           <h2 className="mt-10 text-[11px] font-semibold tracking-[0.16em] uppercase">Payment</h2>
           <dl className="mt-3 space-y-1.5 text-[13px] text-ink-soft">
             <Row label="Method" value={order.payment_method === "cod" ? "Cash on Delivery" : "Prepaid (Razorpay)"} />
+            <Row label="Subtotal" value={formatPaise(order.subtotal_paise)} />
+            {order.discount_paise > 0 ? (
+              <Row
+                label="Discount"
+                value={`− ${formatPaise(order.discount_paise)}${order.coupon_code ? ` (${order.coupon_code})` : ""}`}
+              />
+            ) : null}
+            <Row label="Total" value={formatPaise(order.total_paise)} />
             {order.payment_method === "cod" ? null : (
               <>
                 <Row label="Razorpay order" value={order.razorpay_order_id} />
@@ -134,6 +143,18 @@ export default async function AdminOrderPage({
           </dl>
 
           <div className="mt-5 flex flex-wrap gap-3">
+            {order.shiprocket_shipment_id && !order.awb && order.status !== "cancelled" ? (
+              <form action={assignOrderAwb}>
+                <input type="hidden" name="order_id" value={order.id} />
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 bg-ink px-5 py-2.5 text-[11px] font-semibold tracking-[0.16em] uppercase text-cream transition-colors hover:bg-gold"
+                >
+                  <Truck className="h-3.5 w-3.5" /> Assign AWB
+                </button>
+              </form>
+            ) : null}
+
             {order.shiprocket_order_id ? (
               <form action={syncFromShiprocket}>
                 <input type="hidden" name="order_id" value={order.id} />

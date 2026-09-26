@@ -27,13 +27,12 @@ export type PricedCart = {
   subtotalPaise: number;
   shippingPaise: number;
   /**
-   * No discount is applied today — the first-order 5% offer was removed. Kept
-   * as a field (always 0) rather than deleted outright: `orders.discount_paise`
-   * is a real column, the total-check constraint in 0004_orders.sql is written
-   * against it, and a future coupon or promo code would want the same slot.
+   * Always 0 out of priceCart. A coupon is applied on top by the checkout
+   * actions — see lib/orders/coupons.ts.
    */
   discountPaise: number;
   totalPaise: number;
+  couponCode: string | null;
 };
 
 /**
@@ -130,6 +129,7 @@ export async function priceCart(lines: CartLineInput[]): Promise<PricingResult> 
       shippingPaise: SHIPPING_PAISE,
       discountPaise: 0,
       totalPaise: subtotalPaise + SHIPPING_PAISE,
+      couponCode: null,
     },
   };
 }

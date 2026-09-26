@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { applyCoupon, normaliseCode } from "@/lib/orders/coupons";
 import { fulfilOrder, markOrderFailed } from "@/lib/orders/fulfil";
-import { priceCart, type CartLineInput } from "@/lib/orders/pricing";
+import { priceCart, type CartLineInput, type PricedCart } from "@/lib/orders/pricing";
 import {
   createRazorpayOrder,
   isRazorpayConfigured,
@@ -12,6 +13,7 @@ import {
 import { checkServiceability, isShiprocketConfigured } from "@/lib/shiprocket/client";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
+import { allow } from "@/lib/rateLimit";
 
 export type Address = {
   name: string;
@@ -55,6 +57,10 @@ export type QuoteResult =
       discountPaise: number;
       shippingPaise: number;
       totalPaise: number;
+      /** The coupon that was applied, normalised — null when none was. */
+      couponCode: string | null;
+      /** Why the requested coupon was not applied; the rest of the quote still stands. */
+      couponError: string | null;
     }
   | { ok: false; error: string };
 
@@ -132,19 +138,55 @@ async function codDeliveryError(pincode: string): Promise<string | null> {
 }
 
 /**
+ * Applies a coupon to an already-priced cart. The code is all the browser
+ * sends — the discount comes from the coupons table.
+ *
+ * Rate-limited per customer so the codes cannot be guessed by brute force.
+ */
+async function withCoupon(
+  cart: PricedCart,
+  coupon: string | undefined,
+  userId: string,
+): Promise<{ ok: true; cart: PricedCart } | { ok: false; error: string }> {
+  if (!normaliseCode(coupon)) return { ok: true, cart };
+
+  if (!allow(`coupon:${userId}`, 20, 10 * 60 * 1000)) {
+    return { ok: false, error: "Too many coupon attempts. Please wait a few minutes and try again." };
+  }
+
+  const applied = await applyCoupon({ code: coupon!, subtotalPaise: cart.subtotalPaise, userId });
+  if (!applied.ok) return applied;
+
+  return {
+    ok: true,
+    cart: {
+      ...cart,
+      couponCode: applied.code,
+      discountPaise: applied.discountPaise,
+      totalPaise: cart.subtotalPaise + cart.shippingPaise - applied.discountPaise,
+    },
+  };
+}
+
+/**
  * The authoritative price for the cart, shown on the checkout page before the
  * customer pays. The cart in localStorage carries the price from when the item
  * was added — this is what will really be charged, so the button never
  * promises a different number to the receipt.
  */
-export async function quoteCheckout(lines: CartLineInput[]): Promise<QuoteResult> {
+export async function quoteCheckout(lines: CartLineInput[], coupon?: string): Promise<QuoteResult> {
   const user = await getUser();
   if (!user) return { ok: false, error: "Please sign in to place an order." };
 
   const priced = await priceCart(lines);
   if (!priced.ok) return { ok: false, error: priced.error };
 
-  const { items, subtotalPaise, shippingPaise, discountPaise, totalPaise } = priced.cart;
+  // A bad coupon is not a reason to hide the price — quote without it and say why.
+  const discounted = await withCoupon(priced.cart, coupon, user.id);
+  const cart = discounted.ok ? discounted.cart : priced.cart;
+  const couponError = discounted.ok ? null : discounted.error;
+
+  const { items, subtotalPaise, shippingPaise, discountPaise, totalPaise, couponCode } = cart;
 
   return {
     ok: true,
@@ -160,6 +202,8 @@ export async function quoteCheckout(lines: CartLineInput[]): Promise<QuoteResult
     shippingPaise,
     discountPaise,
     totalPaise,
+    couponCode,
+    couponError,
   };
 }
 
@@ -174,10 +218,12 @@ export async function startCheckout({
   lines,
   address,
   note,
+  coupon,
 }: {
   lines: CartLineInput[];
   address: Address;
   note?: string;
+  coupon?: string;
 }): Promise<StartResult> {
   const user = await getUser();
   if (!user) return { ok: false, error: "Please sign in to place an order." };
@@ -197,7 +243,11 @@ export async function startCheckout({
   const undeliverable = await deliveryError(address.pincode.trim());
   if (undeliverable) return { ok: false, error: undeliverable };
 
-  const { items, subtotalPaise, shippingPaise, discountPaise, totalPaise } = priced.cart;
+  // An invalid coupon stops the order rather than silently charging full price.
+  const discounted = await withCoupon(priced.cart, coupon, user.id);
+  if (!discounted.ok) return { ok: false, error: discounted.error };
+
+  const { items, subtotalPaise, shippingPaise, discountPaise, totalPaise, couponCode } = discounted.cart;
   const db = getSupabaseAdmin();
 
   const { data: order, error } = await db
@@ -230,6 +280,7 @@ export async function startCheckout({
       courier: null,
       note: note?.trim() || null,
       failure_reason: null,
+      coupon_code: couponCode,
     })
     .select()
     .single();
@@ -332,10 +383,12 @@ export async function startCodOrder({
   lines,
   address,
   note,
+  coupon,
 }: {
   lines: CartLineInput[];
   address: Address;
   note?: string;
+  coupon?: string;
 }): Promise<CodResult> {
   const user = await getUser();
   if (!user) return { ok: false, error: "Please sign in to place an order." };
@@ -349,7 +402,11 @@ export async function startCodOrder({
   const undeliverable = await codDeliveryError(address.pincode.trim());
   if (undeliverable) return { ok: false, error: undeliverable };
 
-  const { items, subtotalPaise, shippingPaise, discountPaise, totalPaise } = priced.cart;
+  // An invalid coupon stops the order rather than silently charging full price.
+  const discounted = await withCoupon(priced.cart, coupon, user.id);
+  if (!discounted.ok) return { ok: false, error: discounted.error };
+
+  const { items, subtotalPaise, shippingPaise, discountPaise, totalPaise, couponCode } = discounted.cart;
   const db = getSupabaseAdmin();
 
   const { data: order, error } = await db
@@ -382,6 +439,7 @@ export async function startCodOrder({
       courier: null,
       note: note?.trim() || null,
       failure_reason: null,
+      coupon_code: couponCode,
     })
     .select()
     .single();

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Images, LayoutDashboard, Menu, Package, ShoppingBag, Store, Tags } from "lucide-react";
+import { Images, LayoutDashboard, Menu, Package, ShoppingBag, Store, Tags, TicketPercent } from "lucide-react";
 
 const LINKS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/admin/coupons", label: "Coupons", icon: TicketPercent },
   { href: "/admin/collections", label: "Categories & Collections", icon: Tags },
   { href: "/admin/banners", label: "Banners", icon: Images },
   { href: "/admin/menu", label: "Menu", icon: Menu },

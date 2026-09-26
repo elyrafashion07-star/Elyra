@@ -283,6 +283,8 @@ export type ShiprocketOrderInput = {
   items: { name: string; sku: string; units: number; sellingPrice: number }[];
   paymentMethod: "COD" | "Prepaid";
   subTotal: number;
+  /** Coupon discount in rupees, so the line items add up to sub_total. */
+  totalDiscount?: number;
   /** Package dimensions in cm and weight in kg. */
   parcel?: { lengthCm: number; breadthCm: number; heightCm: number; weightKg: number };
 };
@@ -295,7 +297,15 @@ export type ShiprocketOrderInput = {
 export async function createOrder(input: ShiprocketOrderInput) {
   const p = input.parcel ?? PARCEL;
 
-  return request<{ order_id: number; shipment_id: number; status: string }>(`/orders/create/adhoc`, {
+  // awb_code and courier_name are filled in only when the account has
+  // auto-assign switched on; otherwise they come back empty.
+  return request<{
+    order_id: number;
+    shipment_id: number;
+    status: string;
+    awb_code?: string | number | null;
+    courier_name?: string | null;
+  }>(`/orders/create/adhoc`, {
     method: "POST",
     body: JSON.stringify({
       order_id: input.orderId,
@@ -321,10 +331,50 @@ export async function createOrder(input: ShiprocketOrderInput) {
       })),
       payment_method: input.paymentMethod,
       sub_total: input.subTotal,
+      total_discount: input.totalDiscount ?? 0,
       length: p.lengthCm,
       breadth: p.breadthCm,
       height: p.heightCm,
       weight: p.weightKg,
     }),
   });
+}
+
+// ── AWB ────────────────────────────────────────────────────────────────────
+
+export type AwbAssignment = { awb: string; courier: string | null };
+
+/**
+ * Asks Shiprocket to allocate a courier and tracking number (AWB) for a
+ * shipment right away, instead of waiting for someone to click "Ship Now" in
+ * their panel. With no courier id, Shiprocket picks one using the account's
+ * courier priority rules.
+ *
+ * Shiprocket sometimes reports a refusal with HTTP 200 and
+ * `awb_assign_status: 0` (low wallet balance, pincode not serviceable, …), so a
+ * missing AWB is treated as a failure whatever the status code said.
+ */
+export async function assignAwb(shipmentId: string, courierId?: number): Promise<AwbAssignment> {
+  const body = await request<{
+    awb_assign_status?: number;
+    message?: string;
+    response?: { data?: Record<string, unknown> };
+  }>(`/courier/assign/awb`, {
+    method: "POST",
+    body: JSON.stringify({
+      shipment_id: shipmentId,
+      ...(courierId ? { courier_id: courierId } : {}),
+    }),
+  });
+
+  const data = body.response?.data ?? {};
+  const awb = text(data.awb_code);
+
+  if (!awb) {
+    const reason =
+      text(data.awb_assign_error) ?? text(body.message) ?? "Shiprocket did not return an AWB";
+    throw new ShiprocketError(reason, 422);
+  }
+
+  return { awb, courier: text(data.courier_name) };
 }

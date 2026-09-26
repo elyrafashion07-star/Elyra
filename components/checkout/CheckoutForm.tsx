@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck, Tag, X } from "lucide-react";
 import {
   confirmPayment,
   quoteCheckout,
@@ -115,15 +115,32 @@ export default function CheckoutForm({
   const [quote, setQuote] = useState<QuoteResult | null>(null);
   const [quoting, setQuoting] = useState(true);
 
+  // What is typed in the box vs. what has been sent for the quote. The server
+  // decides whether the coupon holds; `coupon` only ever holds a code it accepted
+  // (or one waiting on its answer).
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!mounted || lines.length === 0) return;
 
     let stale = false;
     setQuoting(true);
 
-    quoteCheckout(lines.map((l) => ({ handle: l.handle, variant: l.variant ?? null, qty: l.qty })))
+    quoteCheckout(
+      lines.map((l) => ({ handle: l.handle, variant: l.variant ?? null, qty: l.qty })),
+      coupon || undefined,
+    )
       .then((result) => {
-        if (!stale) setQuote(result);
+        if (stale) return;
+        setQuote(result);
+        // Rejected (or no longer valid after a cart change): drop it so the
+        // order is not placed with a code the server will refuse.
+        if (result.ok && result.couponError) {
+          setCouponError(result.couponError);
+          setCoupon("");
+        }
       })
       .catch(() => {
         // Not fatal: startCheckout prices the order again on the server anyway.
@@ -136,9 +153,26 @@ export default function CheckoutForm({
     return () => {
       stale = true;
     };
-  }, [mounted, lines]);
+  }, [mounted, lines, coupon]);
+
+  function applyCoupon() {
+    const code = couponInput.trim().toUpperCase();
+    setCouponError(null);
+    if (!code) {
+      setCouponError("Enter a coupon code.");
+      return;
+    }
+    setCoupon(code);
+  }
+
+  function removeCoupon() {
+    setCoupon("");
+    setCouponInput("");
+    setCouponError(null);
+  }
 
   const priced = quote?.ok ? quote : null;
+  const appliedCoupon = priced?.couponCode ?? null;
   const totalLabel = priced ? formatPaise(priced.totalPaise) : formatPrice(subtotal);
 
   /**
@@ -238,7 +272,7 @@ export default function CheckoutForm({
     const cartLines = lines.map((l) => ({ handle: l.handle, variant: l.variant ?? null, qty: l.qty }));
 
     if (paymentMethod === "cod") {
-      const placed = await startCodOrder({ lines: cartLines, address, note });
+      const placed = await startCodOrder({ lines: cartLines, address, note, coupon: appliedCoupon ?? undefined });
 
       if (!placed.ok) {
         setError(placed.error);
@@ -251,7 +285,7 @@ export default function CheckoutForm({
       return;
     }
 
-    const started = await startCheckout({ lines: cartLines, address, note });
+    const started = await startCheckout({ lines: cartLines, address, note, coupon: appliedCoupon ?? undefined });
 
     if (!started.ok) {
       setError(started.error);
@@ -471,8 +505,66 @@ export default function CheckoutForm({
           ))}
         </ul>
 
+        <div className="mt-4 border-b border-line pb-4">
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between gap-3 border border-dashed border-gold bg-cream/40 px-3 py-2.5 text-[13px]">
+              <span className="flex items-center gap-2">
+                <Tag className="h-3.5 w-3.5 text-gold" />
+                <span className="font-semibold tracking-[0.08em]">{appliedCoupon}</span>
+                <span className="text-muted">applied</span>
+              </span>
+              <button
+                type="button"
+                onClick={removeCoupon}
+                disabled={pending}
+                aria-label="Remove coupon"
+                className="text-muted transition-colors hover:text-red-700"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                value={couponInput}
+                onChange={(e) => {
+                  setCouponInput(e.target.value.toUpperCase());
+                  setCouponError(null);
+                }}
+                onKeyDown={(e) => {
+                  // Enter here applies the code instead of submitting the order.
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    applyCoupon();
+                  }
+                }}
+                placeholder="Coupon code"
+                aria-label="Coupon code"
+                maxLength={30}
+                autoComplete="off"
+                className="min-w-0 flex-1 border border-line bg-white px-3 py-2.5 text-[13px] tracking-[0.06em] uppercase outline-none placeholder:normal-case placeholder:tracking-normal focus:border-gold"
+              />
+              <button
+                type="button"
+                onClick={applyCoupon}
+                disabled={quoting && Boolean(coupon)}
+                className="border border-ink px-4 text-[11px] font-semibold tracking-[0.16em] uppercase transition-colors hover:border-gold hover:text-gold disabled:opacity-60"
+              >
+                {quoting && coupon ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Apply"}
+              </button>
+            </div>
+          )}
+          {couponError ? <p className="mt-2 text-[12px] text-red-700">{couponError}</p> : null}
+        </div>
+
         <dl className="mt-4 space-y-2 text-[13px]">
           <Row label="Subtotal" value={priced ? formatPaise(priced.subtotalPaise) : formatPrice(subtotal)} />
+          {priced && priced.discountPaise > 0 ? (
+            <div className="flex justify-between text-emerald-700">
+              <dt>Discount{appliedCoupon ? ` (${appliedCoupon})` : ""}</dt>
+              <dd>− {formatPaise(priced.discountPaise)}</dd>
+            </div>
+          ) : null}
           <Row label="Shipping" value="Free" />
           <div className="flex justify-between border-t border-line pt-3 text-[15px] font-semibold">
             <dt>Total</dt>

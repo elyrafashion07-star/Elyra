@@ -145,6 +145,28 @@ export type OrderRow = {
   courier: string | null;
   note: string | null;
   failure_reason: string | null;
+  /** Code the customer applied, snapshotted — see 0012_coupons.sql. */
+  coupon_code: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/**
+ * See supabase/migrations/0012_coupons.sql. `value` is a percentage for
+ * "percent" and a paise amount for "flat".
+ */
+export type CouponRow = {
+  code: string;
+  description: string;
+  kind: "percent" | "flat";
+  value: number;
+  max_discount_paise: number | null;
+  min_order_paise: number;
+  starts_at: string | null;
+  expires_at: string | null;
+  usage_limit: number | null;
+  per_user_limit: number | null;
+  active: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -219,6 +241,11 @@ export type Database = {
         Omit<OrderRow, "id" | "order_no" | "created_at" | "updated_at">
       >;
       order_items: Table<OrderItemRow, Omit<OrderItemRow, "id">>;
+      coupons: Table<
+        CouponRow,
+        Pick<CouponRow, "code" | "kind" | "value"> &
+          Partial<Omit<CouponRow, "code" | "kind" | "value" | "created_at" | "updated_at">>
+      >;
       order_tracking_events: Table<
         OrderTrackingEventRow,
         Omit<OrderTrackingEventRow, "id" | "created_at">

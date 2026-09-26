@@ -12,7 +12,11 @@
  * creates the Shiprocket shipment.
  */
 import "server-only";
-import { createOrder as createShiprocketOrder, isShiprocketConfigured } from "@/lib/shiprocket/client";
+import {
+  assignAwb,
+  createOrder as createShiprocketOrder,
+  isShiprocketConfigured,
+} from "@/lib/shiprocket/client";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { OrderRow } from "@/lib/supabase/types";
 
@@ -88,7 +92,59 @@ export async function markOrderFailed({
  */
 const CLAIM_TTL_MS = 2 * 60 * 1000;
 
-export type ShipmentResult = { ok: true } | { ok: false; error: string };
+/**
+ * `awb` is the tracking number when one was assigned; `awbError` says why not.
+ * A missing AWB never fails the shipment itself — the order exists in
+ * Shiprocket either way, and the AWB can be requested again from the order page.
+ */
+export type ShipmentResult =
+  | { ok: true; awb: string | null; awbError?: string }
+  | { ok: false; error: string };
+
+export type AwbResult = { ok: true; awb: string; courier: string | null } | { ok: false; error: string };
+
+/**
+ * Gets a courier and tracking number for a shipment that already exists in
+ * Shiprocket, and saves them — so the customer sees the tracking ID the moment
+ * the order is packed instead of whenever the first courier webhook arrives.
+ */
+export async function requestAwb(
+  order: Pick<OrderRow, "id" | "order_no" | "shiprocket_shipment_id" | "awb">,
+): Promise<AwbResult> {
+  if (order.awb) return { ok: true, awb: order.awb, courier: null };
+  if (!order.shiprocket_shipment_id) {
+    return { ok: false, error: "This order has no Shiprocket shipment yet — press Pack first." };
+  }
+
+  let assigned: { awb: string; courier: string | null };
+  try {
+    assigned = await assignAwb(order.shiprocket_shipment_id);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[shipping] AWB assign failed for", order.order_no, message);
+    return { ok: false, error: message };
+  }
+
+  return saveAwb(order, assigned);
+}
+
+async function saveAwb(
+  order: Pick<OrderRow, "id" | "order_no">,
+  assigned: { awb: string; courier: string | null },
+): Promise<AwbResult> {
+  const { error } = await getSupabaseAdmin()
+    .from("orders")
+    .update({ awb: assigned.awb, ...(assigned.courier ? { courier: assigned.courier } : {}) })
+    .eq("id", order.id);
+
+  if (error) {
+    // The AWB exists in Shiprocket; "Sync from Shiprocket" will pull it in.
+    console.error("[shipping] AWB assigned but not saved:", order.order_no, assigned.awb, error.message);
+    return { ok: false, error: `AWB ${assigned.awb} was assigned but could not be saved here — press Sync from Shiprocket.` };
+  }
+
+  return { ok: true, ...assigned };
+}
 
 /**
  * Creates the Shiprocket shipment for a paid order, at most once. This is what
@@ -110,7 +166,11 @@ export async function createShipment(order: OrderRow): Promise<ShipmentResult> {
 
   // Already created earlier (an older auto-pushed order, or a retry after the
   // status update failed) — nothing to send, just let the caller mark it packed.
-  if (order.shiprocket_order_id) return { ok: true };
+  if (order.shiprocket_order_id) {
+    if (order.awb || !order.shiprocket_shipment_id) return { ok: true, awb: order.awb };
+    const awb = await requestAwb(order);
+    return awb.ok ? { ok: true, awb: awb.awb } : { ok: true, awb: null, awbError: awb.error };
+  }
 
   if (!isShiprocketConfigured) {
     return { ok: false, error: "Shiprocket is not configured on this server." };
@@ -149,7 +209,7 @@ export async function createShipment(order: OrderRow): Promise<ShipmentResult> {
     return { ok: false, error: "This order has no items, so there is nothing to ship." };
   }
 
-  let created: { order_id: number; shipment_id: number };
+  let created: Awaited<ReturnType<typeof createShiprocketOrder>>;
   try {
     created = await createShiprocketOrder({
       orderId: order.order_no,
@@ -173,6 +233,7 @@ export async function createShipment(order: OrderRow): Promise<ShipmentResult> {
       })),
       paymentMethod: order.payment_method === "cod" ? "COD" : "Prepaid",
       subTotal: order.total_paise / 100,
+      totalDiscount: order.discount_paise / 100,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -200,7 +261,15 @@ export async function createShipment(order: OrderRow): Promise<ShipmentResult> {
     };
   }
 
-  return { ok: true };
+  // With auto-assign on in Shiprocket the AWB is already in the create response;
+  // otherwise ask for one now rather than waiting on the courier webhook.
+  const ids = { id: order.id, order_no: order.order_no };
+  const autoAwb = created.awb_code == null ? "" : String(created.awb_code).trim();
+  const awb = autoAwb
+    ? await saveAwb(ids, { awb: autoAwb, courier: created.courier_name?.trim() || null })
+    : await requestAwb({ ...ids, shiprocket_shipment_id: String(created.shipment_id), awb: null });
+
+  return awb.ok ? { ok: true, awb: awb.awb } : { ok: true, awb: null, awbError: awb.error };
 }
 
 /**

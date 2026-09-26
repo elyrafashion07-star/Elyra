@@ -120,6 +120,12 @@ export default async function OrderPage({ params }: { params: Promise<{ orderNo:
               <dt>Subtotal</dt>
               <dd>{formatPaise(order.subtotal_paise)}</dd>
             </div>
+            {order.discount_paise > 0 ? (
+              <div className="flex justify-between text-emerald-700">
+                <dt>Discount{order.coupon_code ? ` (${order.coupon_code})` : ""}</dt>
+                <dd>− {formatPaise(order.discount_paise)}</dd>
+              </div>
+            ) : null}
             <div className="flex justify-between text-ink-soft">
               <dt>Shipping</dt>
               <dd>{order.shipping_paise === 0 ? "Free" : formatPaise(order.shipping_paise)}</dd>
